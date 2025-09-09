@@ -690,17 +690,18 @@ def load_model_on_demand(model_name, task_id=None):
             print(f"✅ Procesador BLIP descargado")
             
         elif model_name == 'blip2':
-            print(f"📦 Descargando modelo BLIP2: Salesforce/blip2-opt-2.7b")
-            print(f"🔧 Configuración: use_safetensors=True, torch_dtype=torch.float16")
+            print(f"📦 Descargando modelo BLIP2: Salesforce/blip2-flan-t5-xl")
+            print(f"🔧 Configuración: use_safetensors=True, torch_dtype=torch.float16, device_map=auto")
             models['blip2'] = Blip2ForConditionalGeneration.from_pretrained(
-                "Salesforce/blip2-opt-2.7b", 
+                "Salesforce/blip2-flan-t5-xl", 
                 torch_dtype=torch.float16,
-                use_safetensors=True
-            ).to(device)
-            print(f"✅ Modelo BLIP2 descargado y cargado en {device}")
+                use_safetensors=True,
+                device_map="auto"
+            )
+            print(f"✅ Modelo BLIP2 descargado y cargado con device_map=auto")
             
             print(f"📦 Descargando procesador BLIP2...")
-            processors['blip2'] = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
+            processors['blip2'] = Blip2Processor.from_pretrained("Salesforce/blip2-flan-t5-xl", use_fast=True)
             print(f"✅ Procesador BLIP2 descargado")
             
         
