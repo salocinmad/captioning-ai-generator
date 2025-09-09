@@ -677,10 +677,10 @@ def load_model_on_demand(model_name, task_id=None):
     try:
         if model_name == 'blip':
             print(f"📦 Descargando modelo BLIP: Salesforce/blip-image-captioning-base")
-            print(f"🔧 Configuración: use_safetensors=False, torch_dtype=torch.float16")
+            print(f"🔧 Configuración: use_safetensors=True, torch_dtype=torch.float16")
             models['blip'] = BlipForConditionalGeneration.from_pretrained(
                 "Salesforce/blip-image-captioning-base", 
-                use_safetensors=False,
+                use_safetensors=True,
                 torch_dtype=torch.float16
             ).to(device)
             print(f"✅ Modelo BLIP descargado y cargado en {device}")
@@ -691,11 +691,11 @@ def load_model_on_demand(model_name, task_id=None):
             
         elif model_name == 'blip2':
             print(f"📦 Descargando modelo BLIP2: Salesforce/blip2-opt-2.7b")
-            print(f"🔧 Configuración: use_safetensors=False, torch_dtype=torch.float16")
+            print(f"🔧 Configuración: use_safetensors=True, torch_dtype=torch.float16")
             models['blip2'] = Blip2ForConditionalGeneration.from_pretrained(
                 "Salesforce/blip2-opt-2.7b", 
                 torch_dtype=torch.float16,
-                use_safetensors=False
+                use_safetensors=True
             ).to(device)
             print(f"✅ Modelo BLIP2 descargado y cargado en {device}")
             
