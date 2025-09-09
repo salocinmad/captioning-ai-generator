@@ -9,14 +9,14 @@ Werkzeug==3.0.1
 Pillow==10.4.0
 
 # Machine Learning & AI (USADO)
-# PyTorch se instala manualmente en Docker con: pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+# PyTorch se instala manualmente en Docker con: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
-transformers==4.35.2
-accelerate==0.24.1
-safetensors==0.4.0
+transformers==4.56.1
+accelerate==1.10.1
+safetensors==0.6.2
 
 # Scientific Computing (USADO)
-numpy==1.26.4
+numpy==2.2.6
 
 # HTTP Requests (USADO)
 requests==2.32.5

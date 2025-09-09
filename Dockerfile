@@ -1,5 +1,5 @@
 # Dockerfile para Generador de Captions con IA
-FROM python:3.9-slim-bullseye
+FROM python:3.12-slim-bookworm
 
 # Metadatos
 LABEL maintainer="Captioning AI Generator"
