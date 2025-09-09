@@ -883,7 +883,9 @@
             console.log('Sistema de templates cargado. Pestañas registradas:', window.tabRegistry.tabs.length);
             
             // Cargar modelos disponibles después de crear las pestañas
-            loadAvailableModels();
+            setTimeout(() => {
+                loadAvailableModels();
+            }, 500);
             
             // Inicializar eventos globales después de crear todas las pestañas
             setTimeout(() => {
@@ -1508,13 +1510,19 @@
 
         async function loadAvailableModels() {
             try {
+                console.log('Iniciando carga de modelos...');
                 const response = await fetch('/api/models');
                 const data = await response.json();
                 
+                console.log('Respuesta de API:', data);
+                
                 // El endpoint devuelve {models: [...]}, no un array directo
                 const models = data.models || [];
+                console.log('Modelos encontrados:', models.length);
                 
                 const modelContainer = document.getElementById('modelContainer');
+                console.log('modelContainer encontrado:', modelContainer);
+                
                 if (modelContainer && models.length > 0) {
                     modelContainer.innerHTML = '';
                     models.forEach((model, index) => {
@@ -1536,6 +1544,12 @@
                     console.error('No se pudieron cargar los modelos disponibles - modelContainer no encontrado o sin modelos');
                     console.log('modelContainer:', modelContainer);
                     console.log('models:', models);
+                    
+                    // Intentar de nuevo en 1 segundo
+                    setTimeout(() => {
+                        console.log('Reintentando carga de modelos...');
+                        loadAvailableModels();
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Error al cargar modelos:', error);
