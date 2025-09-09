@@ -1,8 +1,8 @@
-# Generador de Captions con IA - Docker
+# 🐳 Docker - Generador de Captions con IA
 
 Esta carpeta contiene todos los archivos necesarios para ejecutar la aplicación en un contenedor Docker.
 
-## Estructura
+## 📁 **Estructura**
 
 ```
 docker/
@@ -23,13 +23,13 @@ docker/
 └── README_DOCKER.md     # Este archivo
 ```
 
-## Requisitos
+## 🔧 **Requisitos**
 
-- Docker Desktop instalado
-- NVIDIA Docker (opcional, para aceleración GPU)
-- API Key de OpenRouter (para el modelo Llama Vision)
+- **Docker Desktop** instalado
+- **NVIDIA Docker** (opcional, para aceleración GPU)
+- **API Key de OpenRouter** (opcional, para el modelo Llama Vision)
 
-## Configuración inicial
+## ⚙️ **Configuración Inicial**
 
 1. **El archivo `config.json` se crea automáticamente** desde `config.example.json` al iniciar el contenedor.
 
@@ -48,9 +48,9 @@ docker/
    - Genera una API key
    - Cópiala en el archivo `config.json`
 
-## Uso Rápido
+## 🚀 **Uso Rápido**
 
-### Iniciar la aplicación
+### **Iniciar la aplicación**
 ```bash
 # Opción 1: Usar el script (Linux/Mac)
 ./start.sh
@@ -60,7 +60,7 @@ docker-compose build
 docker-compose up -d
 ```
 
-### Detener la aplicación
+### **Detener la aplicación**
 ```bash
 # Opción 1: Usar el script (Linux/Mac)
 ./stop.sh
@@ -69,7 +69,7 @@ docker-compose up -d
 docker-compose down
 ```
 
-### En Windows
+### **En Windows**
 Si estás en Windows, puedes usar directamente los comandos de Docker:
 ```cmd
 docker-compose build
@@ -77,21 +77,21 @@ docker-compose up -d
 docker-compose down
 ```
 
-### Ver logs
+### **Ver logs**
 ```bash
 docker-compose logs -f
 ```
 
-## Configuración
+## ⚙️ **Configuración**
 
 La aplicación se configura mediante el archivo `app/config.json`. Los cambios se reflejan automáticamente al reiniciar el contenedor.
 
-### Variables de entorno importantes
+### **Variables de entorno importantes**
 
 - `CUDA_VISIBLE_DEVICES=0`: Especifica qué GPU usar (si está disponible)
 - `FLASK_ENV=production`: Modo de producción
 
-## Volúmenes
+## 📦 **Volúmenes**
 
 Los siguientes directorios se montan como volúmenes para persistir datos:
 
@@ -100,26 +100,26 @@ Los siguientes directorios se montan como volúmenes para persistir datos:
 - `./app/backups` → `/app/backups` (respaldos)
 - `./app/config.json` → `/app/config.json` (configuración)
 
-## Puertos
+## 🔌 **Puertos**
 
 - **5000**: Puerto de la aplicación web (http://localhost:5000)
 
-## Características
+## ✨ **Características**
 
-- ✅ Soporte para GPU NVIDIA (CUDA)
-- ✅ Modelos BLIP, BLIP2 y Llama Vision
-- ✅ Análisis de metadatos EXIF
-- ✅ Interfaz web completa
-- ✅ Sistema de configuración centralizado
-- ✅ Persistencia de datos
-- ✅ Health checks automáticos
+- ✅ **Soporte para GPU NVIDIA** (CUDA)
+- ✅ **3 Modelos de IA**: BLIP, BLIP2 y Llama Vision
+- ✅ **Análisis de metadatos EXIF**
+- ✅ **Interfaz web completa**
+- ✅ **Sistema de configuración centralizado**
+- ✅ **Persistencia de datos**
+- ✅ **Health checks automáticos**
 
-## Solución de problemas
+## 🛠️ **Solución de Problemas**
 
-### Error de GPU
+### **Error de GPU**
 Si no tienes GPU NVIDIA o Docker no puede acceder a ella, la aplicación funcionará con CPU (más lento).
 
-### Error de memoria
+### **Error de memoria**
 Si tienes problemas de memoria, puedes ajustar los límites en `docker-compose.yml`:
 
 ```yaml
@@ -131,7 +131,7 @@ deploy:
       memory: 2G
 ```
 
-### Reconstruir la imagen
+### **Reconstruir la imagen**
 Si cambias el código, reconstruye la imagen:
 
 ```bash
@@ -139,7 +139,7 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## Desarrollo
+## 🔧 **Desarrollo**
 
 Para desarrollo, puedes montar el código como volumen:
 

@@ -1,117 +1,101 @@
-# 🖼️ AI Image Captioning Tool
+# 🐳 Docker - AI Image Captioning Tool
 
 <div align="center">
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![Flask](https://img.shields.io/badge/Flask-2.3+-green.svg)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.2+-red.svg)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.5+-red.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**Una herramienta web avanzada para generar captions de imágenes usando múltiples modelos de IA**
+**Despliegue Docker del generador de captions con IA**
 
-[🚀 Características](#-características) • [📦 Instalación](#-instalación) • [🎯 Uso](#-uso) • [🤖 Modelos](#-modelos) • [📸 Capturas](#-capturas)
+[🚀 Instalación](#-instalación) • [🎯 Uso](#-uso) • [🔧 Configuración](#-configuración) • [🛠️ Solución de Problemas](#️-solución-de-problemas)
 
 </div>
 
 ---
 
-## ✨ Características
+## 🆕 **Cambios Recientes (Septiembre 2025)**
 
-### 🎨 **Interfaz Web Moderna**
-- 🌙 **Modo Claro/Oscuro** - Detección automática del tema del sistema
-- 📱 **Responsive Design** - Funciona en desktop, tablet y móvil
-- ⚡ **Tiempo Real** - Barra de progreso en vivo durante la generación
-- 🎯 **2 Columnas** - Layout optimizado para mejor visualización
+### ✅ **Mejoras Implementadas**
+- **Python 3.12** - Actualizado desde Python 3.9
+- **Transformers 4.56.1** - Versión estable actualizada
+- **BLIP2 Modelo** - Cambiado a `flan-t5-xl` con `device_map="auto"`
+- **Barra de Progreso** - Mejorada con progreso de imágenes (1 de 5, 2 de 5, etc.)
+- **Interfaz Limpia** - Ocultados nombres de archivos, solo muestra contador
+- **Mensajes Simplificados** - "Cargando modelo en memoria..." unificado
 
-### 🤖 **5 Modelos de IA Especializados**
-- **BLIP** - Modelo preciso para captioning detallado (Por defecto)
-- **WD14** - Waifu Diffusion 1.4, excelente para arte/anime
-- **BLIP-2** - Optimizado para Stable Diffusion 1.5
-- **ViT-GPT2** - Modelo creativo con descripciones elaboradas
+### 🔧 **Correcciones Técnicas**
+- **Error BLIP2** - Solucionado "Cannot copy out of meta tensor"
+- **Compatibilidad** - `use_safetensors=True` mantenido para BLIP
+- **Dependencias** - Sincronizadas entre local y Docker
+- **Progreso** - Arreglado cálculo de porcentajes
 
-### 🔄 **Sistema de Carga Dinámica (NUEVO)**
-- **Carga Bajo Demanda** - Los modelos se cargan solo cuando los necesitas
-- **Gestión Inteligente de Memoria** - Solo un modelo en RAM/VRAM a la vez
-- **Inicio Rápido** - La aplicación inicia en segundos, no minutos
-- **Cambio Automático** - Descarga el modelo anterior al cambiar
-- **Optimización de Recursos** - Reduce uso de RAM de 15-20GB a 3-5GB
-
-### ⚙️ **Funcionalidades Avanzadas**
-- 📁 **Procesamiento en Lote** - Sube múltiples imágenes simultáneamente
-- ✏️ **Editor Integrado** - Edita captions con vista previa de imagen
-- 🏷️ **Palabra Clave** - Agrega prefijos personalizados a los captions
-- 📏 **Control de Longitud** - Especifica número mínimo de palabras
-- 🖼️ **Redimensionado** - Resize automático manteniendo aspect ratio
-- 📦 **Exportación ZIP** - Descarga imágenes redimensionadas + TXT + JSON
-
-### 🎛️ **Controles Personalizables**
-- 🔧 **Resoluciones Predefinidas** - 512x512, 720x720, 768x768, 1024x1024
-- 🎯 **Selección de Modelo** - Cambia entre modelos según necesidad
-- 📊 **Progreso en Vivo** - "Generando captions... 4 de 26"
-- 💾 **Auto-carga** - Carga automática de resultados en editor
+### 🐳 **Mejoras Docker**
+- **Base Image** - `python:3.12-slim-bookworm`
+- **Dependencias** - Versiones actualizadas y compatibles
+- **GPU Support** - NVIDIA Docker optimizado
+- **Volúmenes** - Persistencia de datos mejorada
 
 ---
 
-## 📦 Instalación
+## 🚀 **Instalación Docker**
 
-### 🔧 **Requisitos del Sistema**
-- **Python**: 3.8 o superior
-- **RAM**: 16GB+ recomendado (8GB mínimo)
-- **GPU**: CUDA compatible (opcional, mejora velocidad)
-- **Espacio**: 30-40GB para modelos
+### 🔧 **Requisitos**
+- **Docker Desktop** instalado
+- **NVIDIA Docker** (opcional, para GPU)
+- **8GB RAM** mínimo (16GB recomendado)
+- **15GB espacio** libre
 
-### 🚀 **Instalación Rápida**
+### 📥 **Clonar y Ejecutar**
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/ai-captioning-tool.git
-cd ai-captioning-tool
+git clone https://github.com/salocinmad/captioning-ai-generator.git
+cd captioning-ai-generator/docker
 
-# 2. Crear entorno virtual
-python -m venv venv_caption
-venv_caption\Scripts\activate  # Windows
-# source venv_caption/bin/activate  # Linux/Mac
+# 2. Configurar API key (opcional)
+cp app/config.example.json app/config.json
+# Editar app/config.json con tu API key de OpenRouter
 
-# 3. Instalar dependencias
-pip install -r requirements.txt
+# 3. Construir y ejecutar
+docker-compose build
+docker-compose up -d
 
-# 4. Configurar aplicación (automático)
-# El archivo config.json se crea automáticamente desde config.example.json
-# Edita config.json y agrega tu API key de OpenRouter
-
-# 5. Ejecutar aplicación
-python app.py
+# 4. Acceder a la aplicación
+# http://localhost:5000
 ```
 
-### 🎮 **Scripts de Ejecución**
+### 🎮 **Comandos Docker**
 
-| Script | Descripción | Uso |
-|--------|-------------|-----|
-| `run_gpu_0.bat` | GPU 0 con carga dinámica | `run_gpu_0.bat` |
-| `run_gpu_1.bat` | GPU 1 con carga dinámica | `run_gpu_1.bat` |
-| `run_cpu.bat` | Solo CPU con carga dinámica | `run_cpu.bat` |
-| `run_with_gpu.py` | Selector interactivo | `python run_with_gpu.py` |
-| `check_dynamic_loading.py` | Diagnóstico del sistema | `python check_dynamic_loading.py` |
+```bash
+# Construir imagen
+docker-compose build
 
-### 🧹 **Scripts de Limpieza**
+# Ejecutar en segundo plano
+docker-compose up -d
 
-| Script | Descripción | Uso |
-|--------|-------------|-----|
-| `cleanup_models.bat` | Limpieza básica | Elimina todos los modelos |
-| `cleanup_models_advanced.bat` | Limpieza avanzada | Con estadísticas detalladas |
-| `cleanup_selective.bat` | Limpieza selectiva | Elige qué modelos eliminar |
+# Ver logs
+docker-compose logs -f
+
+# Detener
+docker-compose down
+
+# Reconstruir sin cache
+docker-compose build --no-cache
+```
 
 ---
 
-## 🎯 Uso
+## 🎯 **Uso**
 
-### 🌐 **Acceso Web**
-1. Ejecuta la aplicación
-2. Abre tu navegador en `http://localhost:5000`
+### 🌐 **Acceso**
+1. Ejecuta `docker-compose up -d`
+2. Abre `http://localhost:5000`
 3. ¡Comienza a generar captions!
 
 ### 📸 **Generar Captions**
-1. **Selecciona Modelo** - Elige entre los 6 modelos disponibles
+1. **Selecciona Modelo** - Elige entre los 3 modelos disponibles
 2. **Sube Imágenes** - Arrastra y suelta o haz clic para seleccionar
 3. **Configura Opciones**:
    - 🏷️ Palabra clave (opcional)
@@ -127,173 +111,121 @@ python app.py
 
 ---
 
-## 🤖 Modelos
+## 🤖 **Modelos Disponibles**
 
-### 📊 **Comparación de Modelos**
+### 📊 **3 Modelos de IA**
 
 | Modelo | Tamaño | RAM | Velocidad | Calidad | Uso Recomendado |
 |--------|--------|-----|-----------|---------|-----------------|
 | **BLIP** | 1.2GB | 3GB | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | **Uso general** |
-| **WD14** | 3GB | 6GB | ⭐⭐⭐ | ⭐⭐⭐⭐ | Arte/anime |
 | **BLIP-2** | 5GB | 8GB | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Stable Diffusion |
-| **CLIP** | 1GB | 2GB | ⭐⭐⭐⭐⭐ | ⭐⭐ | Procesamiento masivo |
-| **ViT-GPT2** | 2GB | 4GB | ⭐⭐⭐ | ⭐⭐⭐ | Captions creativos |
+| **Llama 3.2 Vision** | API | 0GB | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **Máxima calidad** |
 
-### 🎯 **Recomendaciones de Uso**
+### 🎯 **Recomendaciones**
 
-#### **Para Captioning General:**
 - **BLIP** - Equilibrio perfecto velocidad/calidad
-- **WD14** - Excelente para imágenes artísticas
-
-#### **Para Stable Diffusion:**
-- **BLIP-2** - Optimizado específicamente para SD 1.5
-
-#### **Para Velocidad:**
-- **CLIP** - El más rápido para lotes grandes
-- **ViT-GPT2** - Creativo y elaborado
+- **BLIP-2** - Optimizado para Stable Diffusion 1.5
+- **Llama 3.2 Vision** - API remota con prompts personalizados
 
 ---
 
-## 📸 Capturas de Pantalla
+## 🔧 **Configuración**
 
-### 🌙 **Modo Oscuro**
-![Modo Oscuro](docs/screenshots/dark-mode.png)
-*Interfaz en modo oscuro con layout de 2 columnas*
+### 📁 **Estructura Docker**
 
-### ☀️ **Modo Claro**
-![Modo Claro](docs/screenshots/light-mode.png)
-*Interfaz en modo claro con selección de modelos*
-
-### ⚡ **Progreso en Tiempo Real**
-![Progreso](docs/screenshots/progress.png)
-*Barra de progreso mostrando "Generando captions... 4 de 26"*
-
----
-
-## 🛠️ Configuración Avanzada
+```
+docker/
+├── app/                    # Aplicación completa
+│   ├── app.py             # Backend Flask
+│   ├── config.json        # Configuración
+│   ├── requirements.txt   # Dependencias
+│   ├── templates/         # Frontend
+│   └── static/           # Archivos estáticos
+├── Dockerfile            # Imagen Docker
+├── docker-compose.yml    # Orquestación
+└── README_DOCKER.md     # Documentación Docker
+```
 
 ### 🔧 **Variables de Entorno**
 
 ```bash
-# Forzar GPU específica
-export CUDA_VISIBLE_DEVICES=0
+# GPU específica
+CUDA_VISIBLE_DEVICES=0
 
 # Modo debug
-export DEBUG_MODE=true
+DEBUG_MODE=true
 
-# Deshabilitar warnings de symlinks (Windows)
-export HF_HUB_DISABLE_SYMLINKS_WARNING=1
+# Deshabilitar warnings
+HF_HUB_DISABLE_SYMLINKS_WARNING=1
 ```
 
-### 📁 **Estructura de Archivos**
+### 📦 **Volúmenes Persistentes**
 
-```
-ai-captioning-tool/
-├── 📁 templates/
-│   └── index.html          # Interfaz web
-├── 📁 uploads/             # Imágenes subidas
-├── 📁 results/             # Resultados generados
-├── 📄 app.py               # Aplicación principal
-├── 📄 requirements.txt     # Dependencias
-├── 📄 run_with_gpu.py      # Selector de GPU
-├── 📄 cleanup_*.bat        # Scripts de limpieza
-└── 📄 README.md            # Este archivo
-```
-
-### 🎛️ **Personalización**
-
-#### **Agregar Nuevo Modelo:**
-1. Importa el modelo en `app.py`
-2. Agrega función de generación
-3. Actualiza la interfaz web
-4. Añade a la lista de modelos
-
-#### **Modificar Interfaz:**
-- **Tema**: Edita variables CSS en `templates/index.html`
-- **Layout**: Modifica clases Bootstrap
-- **Funcionalidad**: Actualiza JavaScript
+- `./app/uploads` → `/app/uploads` (imágenes subidas)
+- `./app/static` → `/app/static` (archivos estáticos)
+- `./app/backups` → `/app/backups` (respaldos)
+- `./app/config.json` → `/app/config.json` (configuración)
 
 ---
 
-## 🐛 Solución de Problemas
+## 🛠️ **Solución de Problemas**
 
 ### ❌ **Errores Comunes**
 
 #### **"CUDA no disponible"**
 ```bash
-# Verificar instalación CUDA
+# Verificar GPU
 nvidia-smi
 
-# Instalar PyTorch con CUDA
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# Verificar Docker GPU
+docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
 ```
 
-#### **"Modelo no está disponible"**
+#### **"Error de memoria"**
 ```bash
-# Limpiar cache y reinstalar
-python cleanup_models.bat
-pip install -r requirements.txt
+# Ajustar límites en docker-compose.yml
+deploy:
+  resources:
+    limits:
+      memory: 4G
 ```
 
-#### **"Error 413 - File too large"**
-- Reducir tamaño de imágenes
-- Aumentar `MAX_CONTENT_LENGTH` en `app.py`
+#### **"Modelo no carga"**
+```bash
+# Ver logs del contenedor
+docker-compose logs -f
 
-### 🔍 **Logs de Debug**
+# Reconstruir imagen
+docker-compose build --no-cache
+```
+
+### 🔍 **Logs y Debug**
 
 ```bash
-# Ejecutar con debug
-python run_with_gpu.py --debug
+# Ver logs en tiempo real
+docker-compose logs -f
 
-# Ver logs detallados
-python app.py 2>&1 | tee debug.log
+# Acceder al contenedor
+docker exec -it captioning-ai-generator bash
+
+# Verificar espacio
+docker exec -it captioning-ai-generator df -h
 ```
 
 ---
 
-## 🤝 Contribuir
+## 📄 **Licencia**
 
-### 🚀 **Cómo Contribuir**
-
-1. **Fork** el repositorio
-2. **Crea** una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** a la rama (`git push origin feature/AmazingFeature`)
-5. **Abre** un Pull Request
-
-### 📋 **Ideas para Contribuir**
-
-- 🎨 Nuevos modelos de captioning
-- 🌍 Soporte multiidioma
-- 📱 App móvil
-- 🔌 API REST
-- 📊 Métricas de calidad
-- 🎯 Detección de objetos
+Este proyecto está bajo la Licencia MIT.
 
 ---
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
-
----
-
-## 🙏 Agradecimientos
+## 🙏 **Agradecimientos**
 
 - **Hugging Face** - Por los modelos de IA
 - **Salesforce** - Por BLIP y BLIP-2
-- **QWEN Team** - Por QWEN2.5-VL
-- **OpenAI** - Por CLIP
-- **Bootstrap** - Por el framework CSS
-- **Flask** - Por el framework web
-
----
-
-## 📞 Contacto
-
-**Desarrollador**: [Tu Nombre](https://github.com/tu-usuario)
-**Email**: tu-email@ejemplo.com
-**Proyecto**: [https://github.com/tu-usuario/ai-captioning-tool](https://github.com/tu-usuario/ai-captioning-tool)
+- **Meta** - Por Llama 3.2 Vision
+- **Docker** - Por la containerización
 
 ---
 
@@ -301,7 +233,6 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 **⭐ Si te gusta este proyecto, ¡dale una estrella! ⭐**
 
-![GitHub stars](https://img.shields.io/github/stars/tu-usuario/ai-captioning-tool?style=social)
-![GitHub forks](https://img.shields.io/github/forks/tu-usuario/ai-captioning-tool?style=social)
+![GitHub stars](https://img.shields.io/github/stars/salocinmad/captioning-ai-generator?style=social)
 
 </div>
