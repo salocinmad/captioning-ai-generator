@@ -83,24 +83,6 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### 🎮 **Scripts de Ejecución**
-
-| Script | Descripción | Uso |
-|--------|-------------|-----|
-| `run_gpu_0.bat` | GPU 0 con carga dinámica | `run_gpu_0.bat` |
-| `run_gpu_1.bat` | GPU 1 con carga dinámica | `run_gpu_1.bat` |
-| `run_cpu.bat` | Solo CPU con carga dinámica | `run_cpu.bat` |
-| `run_with_gpu.py` | Selector interactivo | `python run_with_gpu.py` |
-| `check_dynamic_loading.py` | Diagnóstico del sistema | `python check_dynamic_loading.py` |
-
-### 🧹 **Scripts de Limpieza**
-
-| Script | Descripción | Uso |
-|--------|-------------|-----|
-| `cleanup_models.bat` | Limpieza básica | Elimina todos los modelos |
-| `cleanup_models_advanced.bat` | Limpieza avanzada | Con estadísticas detalladas |
-| `cleanup_selective.bat` | Limpieza selectiva | Elige qué modelos eliminar |
-
 ---
 
 ## 🎯 Uso
