@@ -671,7 +671,7 @@ def load_model_on_demand(model_name, task_id=None):
     # Actualizar progreso si se proporciona task_id
     if task_id and task_id in progress_data:
         progress_data[task_id]['status'] = 'downloading_model'
-        progress_data[task_id]['message'] = f'Descargando modelo {model_name}...'
+        progress_data[task_id]['message'] = f'Cargando modelo {model_name} en memoria...'
         progress_data[task_id]['progress'] = 10
     
     try:
@@ -713,9 +713,9 @@ def load_model_on_demand(model_name, task_id=None):
         
         # Actualizar progreso si se proporciona task_id
         if task_id and task_id in progress_data:
-            progress_data[task_id]['status'] = 'model_loaded'
-            progress_data[task_id]['message'] = f'Modelo {model_name} cargado exitosamente'
-            progress_data[task_id]['progress'] = 20
+            progress_data[task_id]['status'] = 'processing'
+            progress_data[task_id]['message'] = f'Cargando modelo {model_name} en memoria...'
+            progress_data[task_id]['progress'] = 0
         
         print(f"🎉 Modelo {model_name} cargado exitosamente y listo para generar captions")
         print(f"💾 Memoria GPU utilizada: {torch.cuda.memory_allocated() / 1024**3:.2f} GB" if torch.cuda.is_available() else "💾 Usando CPU")

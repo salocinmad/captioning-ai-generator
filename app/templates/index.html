@@ -785,11 +785,10 @@
             const fileList = document.getElementById('fileList');
             
             container.innerHTML = '';
-            fileList.innerHTML = `<strong>Archivos seleccionados (${uploadedFiles.length}):</strong><br>`;
+            fileList.innerHTML = `<strong>Archivos seleccionados (${uploadedFiles.length}):</strong>`;
             
             uploadedFiles.forEach(fileInfo => {
-                // Mostrar nombre en la lista
-                fileList.innerHTML += `${fileInfo.name}<br>`;
+                // Solo mostrar preview de imagen, no el nombre en la lista
                 
                 // Crear preview de imagen
                 const reader = new FileReader();
@@ -924,7 +923,7 @@
                         const progress = await response.json();
                         
                         if (progress.status === 'completed') {
-                                clearInterval(pollingInterval);
+                            clearInterval(pollingInterval);
                             progressContainer.style.display = 'none';
                             
                             // Mostrar resultados
@@ -932,60 +931,46 @@
                             displayResults();
                             
                             // Ocultar loading
-                            if (pollingInterval) {
-                                clearInterval(pollingInterval);
-                            }
                             document.getElementById('generateBtn').disabled = false;
                             document.querySelector('.loading').style.display = 'none';
                         } else if (progress.status === 'downloading_model') {
-                            // Mostrar mensaje de descarga del modelo
-                            progressBar.style.width = '10%';
-                            progressBar.textContent = 'Descargando modelo...';
-                            
-                            // Actualizar texto de progreso
-                            const progressText = document.querySelector('.progress-text');
-                            if (progressText) {
-                                progressText.textContent = progress.message || 'Descargando modelo...';
-                            }
+                            // Mostrar mensaje de carga del modelo
+                            progressBar.style.width = '0%';
+                            progressBar.textContent = '0 de ' + totalFiles;
+                            progressText.textContent = progress.message || 'Cargando modelo en memoria...';
                         } else if (progress.status === 'model_loaded') {
                             // Mostrar mensaje de modelo cargado
-                            progressBar.style.width = '20%';
-                            progressBar.textContent = 'Modelo cargado';
-                            
-                            // Actualizar texto de progreso
-                            const progressText = document.querySelector('.progress-text');
-                            if (progressText) {
-                                progressText.textContent = progress.message || 'Modelo cargado exitosamente';
-                            }
+                            progressBar.style.width = '0%';
+                            progressBar.textContent = '0 de ' + totalFiles;
+                            progressText.textContent = progress.message || 'Cargando modelo en memoria...';
                         } else if (progress.status === 'processing') {
-                            // Actualizar barra de progreso
-                            const current = progress.current || progress.completed || 0;
+                            // Mostrar progreso de imágenes procesadas
+                            const current = progress.current || 0;
                             const total = progress.total || totalFiles;
                             const percentage = Math.round((current / total) * 100);
                             
                             progressBar.style.width = percentage + '%';
-                            progressBar.textContent = `${current}/${total} (${percentage}%)`;
+                            progressBar.textContent = `${current} de ${total}`;
                             
                             // Actualizar texto de progreso
-                            if (progressText) {
-                                if (current === 0) {
-                                    progressText.textContent = 'Preparando generación...';
-                                } else if (current < total) {
-                                    const currentResult = progress.results && progress.results[current - 1];
-                                    const filename = currentResult ? currentResult.filename : 'Procesando...';
-                                    progressText.textContent = `Generando captions (${current} de ${total}) - ${filename}`;
-                                } else {
-                                    progressText.textContent = 'Finalizando...';
-                                }
+                            if (current === 0) {
+                                progressText.textContent = 'Preparando generación...';
+                            } else if (current < total) {
+                                const currentResult = progress.results && progress.results[current - 1];
+                                const filename = currentResult ? currentResult.filename : 'Procesando...';
+                                progressText.textContent = `Generando captions (${current} de ${total}) - ${filename}`;
+                            } else {
+                                progressText.textContent = 'Finalizando...';
                             }
-                            
-                            if (current === total) {
-                                setTimeout(() => {
-                                    clearInterval(pollingInterval);
-                                    progressContainer.style.display = 'none';
-                                }, 1000);
-                            }
+                        } else if (progress.status === 'error') {
+                            clearInterval(pollingInterval);
+                            progressContainer.style.display = 'none';
+                            document.getElementById('generateBtn').disabled = false;
+                            document.querySelector('.loading').style.display = 'none';
+                            alert('Error: ' + (progress.error || 'Error desconocido'));
                         }
+                    } else {
+                        console.error('Error response:', response.status);
                     }
                 } catch (error) {
                     console.error('Error polling progress:', error);
