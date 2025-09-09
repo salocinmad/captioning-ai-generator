@@ -1,0 +1,3189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Captions con IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --input-bg: #ffffff;
+            --modal-bg: #ffffff;
+            --navbar-bg: #0d6efd;
+            --navbar-text: #ffffff;
+            --navbar-border: #0a58ca;
+            --tab-active-bg: #0d6efd;
+            --tab-active-color: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --border-color: #333;
+            --input-bg: #2d2d2d;
+            --modal-bg: #1e1e1e;
+            --navbar-bg: #0d6efd;
+            --navbar-text: #ffffff;
+            --navbar-border: #0a58ca;
+            --tab-active-bg: #0d6efd;
+            --tab-active-color: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .tab-content {
+            background-color: var(--card-bg);
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        [data-theme="dark"] .card-img-top img {
+            border: 1px solid var(--border-color);
+        }
+
+        [data-theme="dark"] .card-img-top {
+            background-color: var(--card-bg);
+        }
+
+        .caption-card {
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background-color: var(--card-bg);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .caption-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .model-selector {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: var(--card-bg);
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        .progress-container {
+            display: none;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .edit-resolution-btn.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+
+        #imageZoomModal .modal-dialog {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        #imageZoomModal .modal-content {
+            background-color: var(--modal-bg);
+            border: 1px solid var(--border-color);
+            height: 90vh;
+        }
+
+        #imageZoomModal .modal-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(90vh - 120px);
+            overflow: hidden;
+        }
+
+        #zoomedImage {
+            max-width: 100%;
+            max-height: 100%;
+            transition: none;
+            user-select: none;
+        }
+
+        #zoomedImage:active {
+            cursor: grabbing;
+        }
+        
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1050;
+        }
+
+        .zoom-controls .btn {
+            margin: 0 2px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-controls .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .image-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1050;
+        }
+
+        .image-info .bg-dark {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .caption-info .bg-primary {
+            background-color: rgba(13, 110, 253, 0.9) !important;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .zoom-level-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1050;
+        }
+
+        #imageZoomModal.fade .modal-dialog {
+            transition: transform 0.3s ease-out;
+            transform: translate(0, -50px);
+        }
+
+        #imageZoomModal.show .modal-dialog {
+            transform: none;
+        }
+
+        .image-preview {
+            transition: transform 0.2s ease;
+        }
+
+        .image-preview:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            #imageZoomModal .modal-dialog {
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+
+            .zoom-controls {
+                top: 5px;
+                right: 5px;
+            }
+
+            .zoom-controls .btn {
+                width: 35px;
+                height: 35px;
+            }
+
+            .image-info {
+                bottom: 5px;
+                left: 5px;
+            }
+        }
+
+        .edit-resolution-btn:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+            color: white;
+        }
+
+        .caption-card {
+            background-color: var(--card-bg);
+        }
+
+        .caption-card .row {
+            align-items: center;
+        }
+
+        .caption-card .col-md-7 {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-control {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .form-control:focus {
+            background-color: var(--input-bg);
+            border-color: #0d6efd;
+            color: var(--text-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+
+        .form-label {
+            color: var(--text-color);
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
+        .alert {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .alert-info {
+            background-color: rgba(13, 202, 240, 0.1);
+            border-color: rgba(13, 202, 240, 0.2);
+        }
+
+        .alert-success {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-color: rgba(25, 135, 84, 0.2);
+        }
+
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-color: rgba(220, 53, 69, 0.2);
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .btn-outline-primary {
+            color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background-color: var(--card-bg);
+        }
+
+        .drop-zone:hover {
+            border-color: #0d6efd;
+        }
+
+        .drop-zone.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        .drop-zone.dragover .drop-zone-content {
+            color: #0d6efd;
+        }
+
+        #metadata-panel {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+        }
+
+        .btn-outline-light {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .btn-outline-light:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: var(--navbar-bg) !important;
+            color: var(--navbar-text) !important;
+            border-bottom: 2px solid var(--navbar-border) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            padding: 1rem 0 !important;
+        }
+
+        .navbar-brand {
+            color: var(--navbar-text) !important;
+            font-weight: 600 !important;
+        }
+
+        .navbar-brand h4 {
+            color: var(--navbar-text) !important;
+            margin: 0 !important;
+            font-size: 1.5rem !important;
+        }
+
+        #themeToggle {
+            color: var(--navbar-text) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        #themeToggle:hover {
+            background-color: rgba(255, 255, 255, 0.2) !important;
+            color: var(--navbar-text) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        /* Sombra y animación para navbar azul */
+        .navbar {
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Botón Enviar a Edición - Mejor visibilidad */
+        .btn-send-to-edit {
+            background: linear-gradient(135deg, #6c757d, #495057) !important;
+            border: 2px solid #495057 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-send-to-edit:hover {
+            background: linear-gradient(135deg, #5a6268, #343a40) !important;
+            border-color: #343a40 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        }
+
+        .btn-send-to-edit:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-color);
+            border-color: transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--tab-active-color);
+            background-color: var(--tab-active-bg);
+            border-color: var(--tab-active-bg);
+        }
+
+        .nav-tabs .nav-link:hover {
+            border-color: var(--border-color);
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg);
+            color: var(--text-color);
+        }
+
+        .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+
+        .modal-footer {
+            border-top-color: var(--border-color);
+        }
+
+        .close {
+            color: var(--text-color);
+        }
+
+        .close:hover {
+            color: var(--text-color);
+        }
+
+        #themeToggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        #themeToggle:hover {
+            background-color: var(--border-color);
+        }
+
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body, .card, .modal-content, .navbar, .nav-tabs .nav-link, .form-control, 
+        .btn-outline-secondary, .btn-outline-light, .alert, .drop-zone, 
+        #metadata-panel, .caption-card, .model-selector, .upload-area {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        [data-theme="dark"] .nav-tabs .nav-link.active {
+            color: var(--tab-active-color);
+            background-color: var(--tab-active-bg);
+        }
+
+        [data-theme="dark"] .text-muted {
+            color: #adb5bd !important;
+        }
+
+        [data-theme="dark"] .bg-light {
+            background-color: var(--card-bg) !important;
+        }
+
+        [data-theme="dark"] .bg-white {
+            background-color: var(--card-bg) !important;
+        }
+
+        [data-theme="dark"] .text-dark {
+            color: var(--text-color) !important;
+        }
+
+        [data-theme="dark"] .border {
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .border-light {
+            border-color: var(--border-color) !important;
+        }
+
+        [data-theme="dark"] .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .card-body {
+            background-color: var(--card-bg);
+        }
+
+        [data-theme="dark"] .card-img-top * {
+            background-color: var(--card-bg);
+        }
+    </style>
+</head>
+<body class="theme-transition">
+    <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                <h4 class="mb-0">🤖 Generador de Captions con IA</h4>
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                <button id="themeToggle" class="btn btn-outline-light btn-sm">
+                    🌙 Modo Oscuro
+                                </button>
+                        </div>
+                    </div>
+                </nav>
+
+    <div class="container-fluid">
+                                <div class="row">
+                        <div class="col-12">
+                <!-- Navigation tabs -->
+                <ul class="nav nav-tabs mt-4" id="mainTabs" role="tablist">
+                    <!-- Tabs will be dynamically populated here -->
+                                                </ul>
+
+                <!-- Tab content -->
+                <div class="tab-content" id="mainTabsContent">
+                    <!-- Tab content will be dynamically populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+    <!-- Modal para zoom de imagen -->
+    <div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageZoomModalLabel">Vista ampliada</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body position-relative p-0">
+                    <div class="zoom-level-indicator" id="zoomLevelIndicator">100%</div>
+                    <div class="zoom-controls">
+                        <button class="btn btn-primary" id="zoomInBtn" title="Acercar">+</button>
+                        <button class="btn btn-primary" id="zoomOutBtn" title="Alejar">-</button>
+                        <button class="btn btn-secondary" id="zoomResetBtn" title="Restablecer">↻</button>
+                        <button class="btn btn-success" id="downloadZoomedImage" title="Descargar">↓</button>
+                    </div>
+                    <div class="image-info">
+                        <span class="badge bg-dark" id="imageInfoText"></span>
+                    </div>
+                    <div class="caption-info" id="captionInfo" style="position: absolute; bottom: 10px; right: 10px; max-width: 300px; z-index: 1050;">
+                        <div class="badge bg-primary" id="captionText" style="display: none; font-size: 0.8rem; text-align: left; white-space: normal; word-wrap: break-word;"></div>
+                        </div>
+                    <img id="zoomedImage" src="" alt="Imagen ampliada" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let uploadedFiles = [];
+        let currentResults = [];
+        let currentResultsFile = '';
+
+        // Configuración de drag and drop - se inicializará después de crear las pestañas
+        function initializeGlobalEvents() {
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+            if (uploadArea && fileInput) {
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        uploadArea.addEventListener('click', (e) => {
+            // Solo activar si no se hizo clic en el botón
+            if (e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+                // Event listener para el botón "Seleccionar Imágenes"
+                const selectImagesBtn = document.getElementById('selectImagesBtn');
+                if (selectImagesBtn) {
+                    selectImagesBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Evitar que se active el click del uploadArea
+                        fileInput.click();
+                    });
+                }
+            }
+
+            // Event listeners para botones de zoom
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const zoomResetBtn = document.getElementById('zoomResetBtn');
+            const downloadZoomedImage = document.getElementById('downloadZoomedImage');
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => adjustZoom(0.1));
+            }
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => adjustZoom(-0.1));
+            }
+            if (zoomResetBtn) {
+                zoomResetBtn.addEventListener('click', resetZoom);
+            }
+            if (downloadZoomedImage) {
+                downloadZoomedImage.addEventListener('click', () => {
+                    if (window.currentImageData) {
+                        const link = document.createElement('a');
+                        link.href = window.currentImageData.src;
+                        link.download = window.currentImageData.filename;
+                        link.click();
+                    }
+                });
+            }
+            
+            // Event listener para zoom con rueda del ratón
+            const imageZoomModal = document.getElementById('imageZoomModal');
+            if (imageZoomModal) {
+                imageZoomModal.addEventListener('wheel', (e) => {
+                    // Solo hacer zoom si el modal está abierto
+                    if (imageZoomModal.classList.contains('show')) {
+                        e.preventDefault();
+                        
+                        // Scroll up (deltaY negativo) = zoom in
+                        // Scroll down (deltaY positivo) = zoom out
+                        const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
+                        adjustZoom(zoomDelta, e.clientX, e.clientY);
+                    }
+                });
+            }
+            
+            // Event listeners para arrastrar la imagen
+            const zoomedImage = document.getElementById('zoomedImage');
+            if (zoomedImage) {
+                let lastMouseX = 0;
+                let lastMouseY = 0;
+                
+                // Mouse events
+                zoomedImage.addEventListener('mousedown', (e) => {
+                    if (currentZoom > 1) {
+                        isDragging = true;
+                        lastMouseX = e.clientX;
+                        lastMouseY = e.clientY;
+                        zoomedImage.style.cursor = 'grabbing';
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging && currentZoom > 1) {
+                        const deltaX = e.clientX - lastMouseX;
+                        const deltaY = e.clientY - lastMouseY;
+                        
+                        // Ajustar el movimiento según el nivel de zoom
+                        // Con más zoom, el movimiento debe ser más suave
+                        imagePosition.x += deltaX / currentZoom;
+                        imagePosition.y += deltaY / currentZoom;
+                        
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${imagePosition.x}px, ${imagePosition.y}px)`;
+                        
+                        lastMouseX = e.clientX;
+                        lastMouseY = e.clientY;
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        zoomedImage.style.cursor = currentZoom > 1 ? 'grab' : 'pointer';
+                    }
+                });
+                
+                // Touch events para dispositivos móviles
+                let lastTouchX = 0;
+                let lastTouchY = 0;
+                
+                zoomedImage.addEventListener('touchstart', (e) => {
+                    if (currentZoom > 1 && e.touches.length === 1) {
+                        isDragging = true;
+                        lastTouchX = e.touches[0].clientX;
+                        lastTouchY = e.touches[0].clientY;
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('touchmove', (e) => {
+                    if (isDragging && currentZoom > 1 && e.touches.length === 1) {
+                        const deltaX = e.touches[0].clientX - lastTouchX;
+                        const deltaY = e.touches[0].clientY - lastTouchY;
+                        
+                        // Ajustar el movimiento según el nivel de zoom
+                        // Con más zoom, el movimiento debe ser más suave
+                        imagePosition.x += deltaX / currentZoom;
+                        imagePosition.y += deltaY / currentZoom;
+                        
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${imagePosition.x}px, ${imagePosition.y}px)`;
+                        
+                        lastTouchX = e.touches[0].clientX;
+                        lastTouchY = e.touches[0].clientY;
+                        
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('touchend', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                    }
+                });
+            }
+        }
+
+        function handleFiles(files) {
+            uploadedFiles = Array.from(files).map(file => ({
+                file: file,
+                id: Math.random().toString(36).substr(2, 9),
+                name: file.name
+            }));
+
+            displayFilePreview();
+            document.getElementById('generateBtn').disabled = false;
+        }
+
+        function displayFilePreview() {
+            const container = document.getElementById('filePreview');
+            const fileList = document.getElementById('fileList');
+            
+            container.innerHTML = '';
+            fileList.innerHTML = `<strong>Archivos seleccionados (${uploadedFiles.length}):</strong><br>`;
+            
+            uploadedFiles.forEach(fileInfo => {
+                // Mostrar nombre en la lista
+                fileList.innerHTML += `${fileInfo.name}<br>`;
+                
+                // Crear preview de imagen
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'col-md-3 mb-3';
+                    div.innerHTML = `
+                    <div class="card">
+                            <img src="${e.target.result}" class="card-img-top image-preview" alt="${fileInfo.name}" onclick="openImageZoom('${e.target.result}', '${fileInfo.name}')">
+                            <div class="card-body">
+                                <p class="card-text small">${fileInfo.name}</p>
+                        </div>
+                    </div>
+                `;
+                    container.appendChild(div);
+                };
+                reader.readAsDataURL(fileInfo.file);
+            });
+        }
+
+        function getSystemTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
+            return 'light';
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar tema inicial
+            if (!localStorage.getItem('theme')) {
+                applyTheme(getSystemTheme());
+            } else {
+                applyTheme(localStorage.getItem('theme'));
+                
+                // Verificar si es la primera vez que se abre
+                if (!localStorage.getItem('user_theme_set')) {
+                    const savedTheme = localStorage.getItem('theme');
+                    const systemTheme = getSystemTheme();
+                    if (savedTheme !== systemTheme) {
+                        localStorage.setItem('user_theme_set', 'true');
+                    }
+                }
+            }
+            
+            // Event listener para toggle de tema
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                applyTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
+                localStorage.setItem('user_theme_set', 'true');
+            });
+
+            // Los modelos se cargarán después de crear las pestañas
+            
+            // Event listener para cambios de tema del sistema
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    // Solo cambiar automáticamente si el usuario no ha establecido preferencia
+                    if (!localStorage.getItem('user_theme_set')) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+
+            // Crear pestañas con un pequeño delay para asegurar inicialización completa
+            setTimeout(() => {
+                try {
+                    createGenerationTab();
+                    console.log('Pestaña de generación creada');
+                } catch (e) {
+                    console.error('Error creando pestaña de generación:', e);
+                }
+                
+                try {
+                    createEditTab();
+                    console.log('Pestaña de edición creada');
+                } catch (e) {
+                    console.error('Error creando pestaña de edición:', e);
+                }
+                
+                try {
+                    createMetadataTab();
+                    createConfigTab();
+                    console.log('Pestaña de metadatos creada');
+                } catch (e) {
+                    console.error('Error creando pestaña de metadatos:', e);
+                }
+            }, 100);
+
+            console.log('Sistema de templates cargado. Pestañas registradas:', window.tabRegistry.tabs.length);
+            
+            // Cargar modelos disponibles después de crear las pestañas
+            loadAvailableModels();
+            
+            // Inicializar eventos globales después de crear todas las pestañas
+            setTimeout(() => {
+                initializeGlobalEvents();
+                initializeAllEventListeners();
+                console.log('Eventos globales inicializados');
+            }, 100);
+        });
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            if (theme === 'dark') {
+                document.getElementById('themeToggle').innerHTML = '☀️ Modo Claro';
+            } else {
+                document.getElementById('themeToggle').innerHTML = '🌙 Modo Oscuro';
+            }
+        }
+
+        function resetToAutoTheme() {
+            localStorage.removeItem('theme');
+            localStorage.removeItem('user_theme_set');
+            applyTheme(getSystemTheme());
+        }
+
+        function pollProgress(taskId, totalFiles) {
+            let pollingInterval;
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.getElementById('progressText');
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/progress/${taskId}`);
+                    if (response.ok) {
+                        const progress = await response.json();
+                        
+                        if (progress.status === 'completed') {
+                                clearInterval(pollingInterval);
+                            progressContainer.style.display = 'none';
+                            
+                            // Mostrar resultados
+                            currentResults = progress.results;
+                            displayResults();
+                            
+                            // Ocultar loading
+                            if (pollingInterval) {
+                                clearInterval(pollingInterval);
+                            }
+                            document.getElementById('generateBtn').disabled = false;
+                            document.querySelector('.loading').style.display = 'none';
+                        } else if (progress.status === 'processing') {
+                            // Actualizar barra de progreso
+                            const current = progress.current || progress.completed || 0;
+                            const total = progress.total || totalFiles;
+                            const percentage = Math.round((current / total) * 100);
+                            
+                            progressBar.style.width = percentage + '%';
+                            progressBar.textContent = `${current}/${total} (${percentage}%)`;
+                            
+                            // Actualizar texto de progreso
+                            if (progressText) {
+                                if (current === 0) {
+                                    progressText.textContent = 'Preparando generación...';
+                                } else if (current < total) {
+                                    const currentResult = progress.results && progress.results[current - 1];
+                                    const filename = currentResult ? currentResult.filename : 'Procesando...';
+                                    progressText.textContent = `Generando captions (${current} de ${total}) - ${filename}`;
+                                } else {
+                                    progressText.textContent = 'Finalizando...';
+                                }
+                            }
+                            
+                            if (current === total) {
+                                setTimeout(() => {
+                                    clearInterval(pollingInterval);
+                                    progressContainer.style.display = 'none';
+                                }, 1000);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error polling progress:', error);
+                    clearInterval(pollingInterval);
+                    progressContainer.style.display = 'none';
+                    document.getElementById('generateBtn').disabled = false;
+                    document.querySelector('.loading').style.display = 'none';
+                }
+            };
+            
+            // Iniciar polling inmediatamente y luego cada 500ms
+            poll();
+            pollingInterval = setInterval(poll, 500);
+        }
+
+        // Función para inicializar todos los event listeners
+        function initializeAllEventListeners() {
+            // Evitar duplicar event listeners
+            if (window.eventListenersInitialized) {
+                return;
+            }
+            window.eventListenersInitialized = true;
+            
+            // Limpiar event listeners anteriores si existen
+            const downloadZipBtn = document.getElementById('downloadZipBtn');
+            const downloadEditZipBtn = document.getElementById('downloadEditZipBtn');
+            
+            if (downloadZipBtn) {
+                downloadZipBtn.replaceWith(downloadZipBtn.cloneNode(true));
+            }
+            if (downloadEditZipBtn) {
+                downloadEditZipBtn.replaceWith(downloadEditZipBtn.cloneNode(true));
+        }
+
+        // Generar captions
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', async () => {
+            const selectedModel = document.querySelector('input[name="model"]:checked').value;
+            const keyword = document.getElementById('keywordInput').value.trim();
+            const minWords = parseInt(document.getElementById('minWordsInput').value) || 0;
+            const consistencyMode = document.getElementById('consistencySelect').value;
+            const customPrompt = document.getElementById('customPromptInput').value.trim();
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.querySelector('.progress-bar');
+
+            if (uploadedFiles.length === 0) {
+                alert('Por favor selecciona al menos una imagen.');
+                return;
+            }
+
+            document.getElementById('generateBtn').disabled = true;
+            document.querySelector('.loading').style.display = 'inline-block';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            
+            // Inicializar texto de progreso
+            const progressText = document.getElementById('progressText');
+            if (progressText) {
+                progressText.textContent = `Iniciando generación de ${uploadedFiles.length} imagen${uploadedFiles.length > 1 ? 'es' : ''}...`;
+            }
+
+            // Subir archivos primero
+            const formData = new FormData();
+            uploadedFiles.forEach(fileInfo => {
+                formData.append('files', fileInfo.file);
+            });
+
+            try {
+                const uploadResponse = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al subir archivos');
+                }
+
+                const uploadData = await uploadResponse.json();
+
+                if (uploadData.error) {
+                    throw new Error(uploadData.error);
+                }
+
+                // Generar captions con polling
+                const captionResponse = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        files: uploadData.files, // Incluir los archivos subidos
+                        keyword: keyword,
+                        min_words: minWords,
+                        consistency_mode: consistencyMode,
+                        custom_prompt: customPrompt
+                    })
+                });
+
+                if (!captionResponse.ok) {
+                    const errorData = await captionResponse.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al generar captions');
+                }
+
+                const captionData = await captionResponse.json();
+                
+                if (captionData.error) {
+                    throw new Error(captionData.error);
+                }
+
+                if (captionData.task_id) {
+                    pollProgress(captionData.task_id, uploadedFiles.length);
+                } else {
+                    currentResults = captionData.results;
+                    displayResults();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+                document.getElementById('generateBtn').disabled = false;
+                document.querySelector('.loading').style.display = 'none';
+                progressContainer.style.display = 'none';
+            }
+        });
+            }
+
+
+            // Otros event listeners aquí...
+        }
+
+        function displayResults() {
+            const container = document.getElementById('results');
+            const resultActions = document.getElementById('resultActions');
+            
+            if (!currentResults || currentResults.length === 0) {
+                container.innerHTML = '<div class="alert alert-warning">No se encontraron resultados.</div>';
+                resultActions.style.display = 'none';
+                return;
+            }
+
+            // Crear layout responsivo con múltiples columnas
+            container.innerHTML = `
+                <div class="row g-3">
+                    ${currentResults.map((result, index) => `
+                        <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-img-top-container" style="height: 300px; overflow: hidden; position: relative;">
+                                    <img src="/uploads/${result.filename}" 
+                                         class="card-img-top" 
+                                         alt="${result.filename}" 
+                                         style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;"
+                                         onclick="openImageZoom('/uploads/${result.filename}', '${result.filename}', '${result.caption.replace(/'/g, "\\'")}')">
+                            </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-truncate" title="${result.filename}">
+                                        ${result.filename}
+                                    </h6>
+                                    <p class="card-text flex-grow-1" style="font-size: 0.9rem;">
+                                        ${result.caption}
+                                    </p>
+                                    <div class="mt-auto">
+                                        <button class="btn btn-sm btn-outline-primary w-100" 
+                                                onclick="regenerateSingleCaption(${index})" 
+                                                title="Regenerar caption">
+                                            🔄 Regenerar
+                                        </button>
+                            </div>
+                        </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    </div>
+                `;
+            
+            resultActions.style.display = 'block';
+
+            // Re-asignar event listeners dinámicos
+            if (saveResultsBtn) {
+                saveResultsBtn.addEventListener('click', () => {
+            const dataStr = JSON.stringify(currentResults, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'captions.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+            }
+
+            if (downloadZipBtn) {
+                downloadZipBtn.addEventListener('click', async () => {
+            // Buscar específicamente en la pestaña de generación
+            const activeBtn = document.querySelector('#resultActions .resolution-btn.active');
+            console.log('Botón activo (generación):', activeBtn);
+            
+            if (!activeBtn) {
+                alert('Por favor selecciona una resolución antes de descargar.');
+                return;
+            }
+            
+            const width = parseInt(activeBtn.dataset.width);
+            const height = parseInt(activeBtn.dataset.height);
+            
+            console.log('Resolución seleccionada:', width, 'x', height);
+            console.log('Resultados actuales:', currentResults);
+            console.log('Datos enviados al backend:', {
+                results: currentResults,
+                width: width,
+                height: height
+            });
+            
+            if (!width || !height || width < 64 || height < 64) {
+                alert('Por favor selecciona una resolución válida antes de descargar.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/download-zip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        results: currentResults,
+                        width: width,
+                        height: height
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al crear el archivo ZIP');
+                }
+                
+                const blob = await response.blob();
+                        console.log('ZIP generado correctamente, tamaño:', blob.size, 'bytes');
+                const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'imagenes.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                        console.log('Descarga iniciada: imagenes.zip');
+            } catch (error) {
+                console.error('Error al descargar ZIP:', error);
+                alert('Error al descargar las imágenes: ' + error.message);
+            }
+        });
+            }
+
+            // Inicializar listeners para botones de resolución (solo en pestaña de generación)
+            document.querySelectorAll('#resultActions .resolution-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                    document.querySelectorAll('#resultActions .resolution-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+            // Activar el primer botón por defecto (solo en pestaña de generación)
+            const firstResBtn = document.querySelector('#resultActions .resolution-btn');
+            if (firstResBtn) {
+                firstResBtn.classList.add('active');
+            }
+        }
+
+        // Los botones de resolución de edición se inicializan en initializeEditTabEvents
+
+        function loadCaptionsForEdit() {
+            if (currentResults.length > 0) {
+                loadCurrentResultsToEdit();
+                showTab('edit-panel');
+            }
+        }
+
+        function loadCurrentResultsToEdit() {
+            if (currentResults && currentResults.length > 0) {
+                displayEditResults();
+                showTab('edit-panel');
+            } else {
+                alert('No hay resultados para editar. Por favor, genera algunos captions primero.');
+            }
+        }
+
+
+        function displayEditResults() {
+            console.log('displayEditResults llamada');
+            const container = document.getElementById('editResults');
+            const editActions = document.getElementById('editActions');
+            
+            console.log('Container editResults encontrado:', container);
+            console.log('editActions encontrado:', editActions);
+            console.log('currentResults:', currentResults);
+            
+            if (!currentResults || currentResults.length === 0) {
+                console.log('No hay resultados para mostrar');
+                container.innerHTML = '<div class="alert alert-warning">No hay captions para editar. Carga un archivo JSON o genera captions primero.</div>';
+                editActions.style.display = 'none';
+                return;
+            }
+
+            console.log('Generando HTML para', currentResults.length, 'resultados');
+
+            // Crear botón para limpiar todos los captions
+            let clearAllButton = '';
+            if (currentResults.length > 1) {
+                clearAllButton = `
+                    <div class="mb-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="clearAllCaptions()">
+                            🗑️ Limpiar todos los captions
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Crear layout responsivo con múltiples columnas (igual que en displayResults)
+            container.innerHTML = clearAllButton + `
+                <div class="row g-3">
+                    ${currentResults.map((result, index) => `
+                        <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-img-top-container" style="height: 300px; overflow: hidden; position: relative;">
+                                    <img src="/uploads/${result.filename}" 
+                                         class="card-img-top" 
+                                         alt="${result.filename}" 
+                                         style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;"
+                                         onclick="openImageZoom('/uploads/${result.filename}', '${result.filename}', '${result.caption.replace(/'/g, "\\'")}')">
+                            </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title text-truncate" title="${result.filename}">
+                                        ${result.filename}
+                                    </h6>
+                                <div class="mb-2">
+                                        <label class="form-label small">Caption:</label>
+                                        <textarea class="form-control form-control-sm" rows="3" id="caption-${index}" data-index="${index}">${result.caption}</textarea>
+                                </div>
+                                    <div class="mt-auto">
+                                        <div class="btn-group w-100" role="group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="copyToAll(${index})" title="Copiar este caption a todas las demás fotos">
+                                                📋 Copiar
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="regenerateSingleCaption(${index})" title="Regenerar caption">
+                                                🔄 Regenerar
+                                            </button>
+                            </div>
+                        </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    </div>
+                `;
+
+            console.log('HTML generado, mostrando editActions');
+            editActions.style.display = 'block';
+            console.log('displayEditResults completada');
+        }
+
+        function clearAllCaptions() {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los captions? Esta acción no se puede deshacer.')) {
+                const textareas = document.querySelectorAll('#editResults textarea');
+            textareas.forEach(textarea => {
+                    textarea.value = '';
+                });
+            }
+        }
+
+        function copyToAll(sourceIndex) {
+            const sourceTextarea = document.getElementById(`caption-${sourceIndex}`);
+            const sourceCaptionText = sourceTextarea.value.trim();
+            
+            if (!sourceCaptionText) {
+                alert('El caption de origen está vacío.');
+                return;
+            }
+
+            const textareas = document.querySelectorAll('#editResults textarea');
+            textareas.forEach((textarea, index) => {
+                if (index !== sourceIndex) {
+                    textarea.value = sourceCaptionText;
+                }
+            });
+
+            // Feedback visual temporal
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '✅ Copiado';
+            button.classList.add('btn-success');
+            button.classList.remove('btn-outline-primary');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+            }, 1500);
+        }
+
+        function sendToEdit() {
+            if (uploadedFiles.length === 0) {
+                alert('Por favor selecciona al menos una imagen.');
+                return;
+            }
+            
+            // Crear resultados básicos sin captions para editar
+            currentResults = uploadedFiles.map(fileInfo => {
+                const reader = new FileReader();
+                return new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        resolve({
+                            filename: fileInfo.name,
+                            caption: '',
+                            image_data: e.target.result
+                        });
+                    };
+                    reader.readAsDataURL(fileInfo.file);
+                });
+            });
+
+            // Esperar a que todas las promesas se resuelvan
+            Promise.all(currentResults).then(results => {
+                currentResults = results;
+                displayEditResults();
+                showTab('edit-panel');
+            });
+        }
+
+        function openImageZoom(imageSrc, imageInfo = '', caption = '') {
+            const modal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+            const zoomedImage = document.getElementById('zoomedImage');
+            const imageInfoText = document.getElementById('imageInfoText');
+            const captionText = document.getElementById('captionText');
+            
+            zoomedImage.src = imageSrc;
+            imageInfoText.textContent = imageInfo;
+            
+            // Mostrar caption si está disponible
+            if (captionText) {
+                if (caption) {
+                    captionText.textContent = caption;
+                    captionText.style.display = 'block';
+                } else {
+                    captionText.style.display = 'none';
+                }
+            }
+            
+            // Resetear zoom
+            resetZoom();
+            
+            // Guardar datos de imagen actual para descargar
+            window.currentImageData = {
+                src: imageSrc,
+                filename: imageInfo
+            };
+            
+            modal.show();
+        }
+        
+        function openImageZoomFromDataUrl(dataUrl, imageInfo = '', caption = '') {
+            const modal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+            const zoomedImage = document.getElementById('zoomedImage');
+            const imageInfoText = document.getElementById('imageInfoText');
+            const captionText = document.getElementById('captionText');
+            
+            // Usar el data URL directamente
+            zoomedImage.src = dataUrl;
+            imageInfoText.textContent = imageInfo;
+            
+            // Mostrar caption si está disponible
+            if (captionText) {
+                if (caption) {
+                    captionText.textContent = caption;
+                    captionText.style.display = 'block';
+                } else {
+                    captionText.style.display = 'none';
+                }
+            }
+            
+            // Resetear zoom
+            resetZoom();
+            
+            // Guardar datos de imagen actual para descargar
+            window.currentImageData = {
+                src: dataUrl,
+                filename: imageInfo
+            };
+            
+            modal.show();
+        }
+
+        let currentZoom = 1;
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let imagePosition = { x: 0, y: 0 };
+
+        function adjustZoom(delta, mouseX = null, mouseY = null) {
+            const zoomedImage = document.getElementById('zoomedImage');
+            const modalBody = document.querySelector('#imageZoomModal .modal-body');
+            
+            // Si se proporcionan coordenadas del mouse, hacer zoom hacia esa posición
+            if (mouseX !== null && mouseY !== null && currentZoom > 1) {
+                const rect = modalBody.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                // Calcular el offset del mouse desde el centro
+                const offsetX = mouseX - centerX;
+                const offsetY = mouseY - centerY;
+                
+                // Ajustar la posición de la imagen para hacer zoom hacia el cursor
+                imagePosition.x -= offsetX * delta;
+                imagePosition.y -= offsetY * delta;
+            }
+            
+            currentZoom = Math.max(0.1, Math.min(5, currentZoom + delta));
+            zoomedImage.style.transform = `scale(${currentZoom}) translate(${imagePosition.x}px, ${imagePosition.y}px)`;
+            updateZoomIndicator();
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            imagePosition = { x: 0, y: 0 };
+            const zoomedImage = document.getElementById('zoomedImage');
+            zoomedImage.style.transform = 'scale(1) translate(0px, 0px)';
+            updateZoomIndicator();
+        }
+
+        function updateZoomIndicator() {
+            const indicator = document.getElementById('zoomLevelIndicator');
+            indicator.textContent = Math.round(currentZoom * 100) + '%';
+        }
+
+        async function loadAvailableModels() {
+            try {
+                const response = await fetch('/api/models');
+                const data = await response.json();
+                
+                // El endpoint devuelve {models: [...]}, no un array directo
+                const models = data.models || [];
+                
+                const modelContainer = document.getElementById('modelContainer');
+                if (modelContainer && models.length > 0) {
+                    modelContainer.innerHTML = '';
+                    models.forEach((model, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        div.innerHTML = `
+                            <input class="form-check-input" type="radio" name="model" id="model${index}" value="${model.id}" ${index === 0 ? 'checked' : ''} onchange="toggleCustomPrompt()">
+                            <label class="form-check-label" for="model${index}">
+                                ${model.name} - ${model.description}
+                            </label>
+                        `;
+                        modelContainer.appendChild(div);
+                    });
+                    
+                    // Verificar si el primer modelo seleccionado necesita prompt personalizado
+                    toggleCustomPrompt();
+                    console.log('Modelos cargados exitosamente:', models.length);
+                } else {
+                    console.error('No se pudieron cargar los modelos disponibles');
+                }
+            } catch (error) {
+                console.error('Error al cargar modelos:', error);
+            }
+        }
+
+        function toggleCustomPrompt() {
+            const selectedModel = document.querySelector('input[name="model"]:checked');
+            const customPromptContainer = document.getElementById('customPromptContainer');
+            
+            if (selectedModel && customPromptContainer) {
+                if (selectedModel.value === 'llama-vision') {
+                    customPromptContainer.style.display = 'block';
+                    // Restaurar último prompt guardado
+                    restoreLastPrompt();
+                } else {
+                    customPromptContainer.style.display = 'none';
+                }
+            }
+        }
+
+        function saveLastPrompt() {
+            const customPromptInput = document.getElementById('customPromptInput');
+            if (customPromptInput && customPromptInput.value.trim()) {
+                localStorage.setItem('lastCustomPrompt', customPromptInput.value.trim());
+            }
+        }
+
+        function restoreLastPrompt() {
+            const customPromptInput = document.getElementById('customPromptInput');
+            const lastPrompt = localStorage.getItem('lastCustomPrompt');
+            if (customPromptInput && lastPrompt) {
+                customPromptInput.value = lastPrompt;
+            }
+        }
+
+        async function regenerateSingleCaption(index) {
+            console.log(`🔄 Iniciando regeneración para imagen ${index}`);
+            
+            if (!currentResults[index]) {
+                console.error('No se encontró el resultado en el índice:', index);
+                alert('Error: No se encontró la imagen para regenerar');
+                return;
+            }
+
+            const selectedModel = document.querySelector('input[name="model"]:checked');
+            if (!selectedModel) {
+                alert('Por favor selecciona un modelo primero');
+                return;
+            }
+
+            const modelName = selectedModel.value;
+            const keyword = document.getElementById('keywordInput').value.trim();
+            const minWords = parseInt(document.getElementById('minWordsInput').value) || 0;
+            const consistencyMode = document.getElementById('consistencySelect').value;
+            const customPrompt = document.getElementById('customPromptInput').value.trim();
+
+            console.log(`📋 Configuración: modelo=${modelName}, keyword="${keyword}", minWords=${minWords}, consistency=${consistencyMode}`);
+
+            // Buscar el botón de regenerar para esta imagen específica
+            const buttons = document.querySelectorAll('button[onclick*="regenerateSingleCaption"]');
+            let button = null;
+            
+            for (let btn of buttons) {
+                if (btn.onclick.toString().includes(`regenerateSingleCaption(${index})`)) {
+                    button = btn;
+                    break;
+                }
+            }
+            
+            if (!button) {
+                console.error(`No se pudo encontrar el botón para imagen ${index}`);
+                alert('Error: No se pudo encontrar el botón de regenerar');
+                return;
+            }
+            
+            console.log(`✅ Botón encontrado para imagen ${index}`);
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Regenerando...';
+            button.disabled = true;
+
+            try {
+                console.log(`📤 Enviando petición de regeneración para: ${currentResults[index].filename}`);
+                
+                const response = await fetch('/api/regenerate_caption', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: currentResults[index].filename,
+                        model: modelName,
+                        keyword: keyword,
+                        min_words: minWords,
+                        consistency_mode: consistencyMode,
+                        custom_prompt: customPrompt
+                    })
+                });
+                
+                console.log(`📥 Respuesta recibida: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Error ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log(`📊 Resultado:`, result);
+                
+                if (result.caption) {
+                    // Actualizar el resultado en memoria
+                    currentResults[index].caption = result.caption;
+                    console.log(`💾 Caption actualizado en memoria: "${result.caption}"`);
+                    
+                    // Actualizar la UI en la pestaña de generación
+                    const generationResults = document.querySelector('#results');
+                    if (generationResults) {
+                        console.log(`🔍 Buscando tarjeta para imagen ${index} en contenedor #results`);
+                        
+                        // Buscar por índice usando nth-child
+                        const cardSelector = `.col-12.col-sm-6.col-lg-4.col-xl-3:nth-child(${index + 1})`;
+                        const targetCard = generationResults.querySelector(cardSelector);
+                        
+                        if (targetCard) {
+                            console.log(`✅ Tarjeta encontrada para imagen ${index}`);
+                            const captionP = targetCard.querySelector('.card-text');
+                            if (captionP) {
+                                const oldCaption = captionP.textContent;
+                                captionP.textContent = result.caption;
+                                console.log(`🔄 Caption actualizado en pestaña de generación:`);
+                                console.log(`   Antes: "${oldCaption}"`);
+                                console.log(`   Después: "${result.caption}"`);
+                            } else {
+                                console.error(`❌ No se encontró el elemento .card-text en la tarjeta ${index}`);
+                                console.log(`🔍 Estructura de la tarjeta:`, targetCard.innerHTML);
+                            }
+                        } else {
+                            console.error(`❌ No se encontró la tarjeta para imagen ${index} con selector: ${cardSelector}`);
+                            console.log(`🔍 Tarjetas disponibles:`, generationResults.querySelectorAll('.col-12.col-sm-6.col-lg-4.col-xl-3').length);
+                        }
+                    } else {
+                        console.error(`❌ No se encontró el contenedor #results`);
+                    }
+                    
+                    // Actualizar la UI en la pestaña de edición
+                    const editTextarea = document.getElementById(`caption-${index}`);
+                    if (editTextarea) {
+                        const oldValue = editTextarea.value;
+                        editTextarea.value = result.caption;
+                        console.log(`🔄 Caption actualizado en pestaña de edición:`);
+                        console.log(`   Antes: "${oldValue}"`);
+                        console.log(`   Después: "${result.caption}"`);
+                        
+                        // Verificar que realmente se actualizó
+                        if (editTextarea.value === result.caption) {
+                            console.log(`✅ Textarea de edición actualizado correctamente`);
+                        } else {
+                            console.error(`❌ Error: El textarea no se actualizó correctamente`);
+                        }
+                        
+                        // Forzar actualización visual si es necesario
+                        editTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        console.log(`🔄 Evento de input disparado para forzar actualización visual`);
+                    } else {
+                        console.log(`ℹ️ No se encontró textarea de edición para imagen ${index} (normal si no estás en pestaña de edición)`);
+                        
+                        // Buscar alternativamente por data-index
+                        const alternativeTextarea = document.querySelector(`textarea[data-index="${index}"]`);
+                        if (alternativeTextarea) {
+                            console.log(`🔍 Encontrado textarea alternativo con data-index="${index}"`);
+                            const oldValue = alternativeTextarea.value;
+                            alternativeTextarea.value = result.caption;
+                            console.log(`🔄 Caption actualizado en textarea alternativo:`);
+                            console.log(`   Antes: "${oldValue}"`);
+                            console.log(`   Después: "${result.caption}"`);
+                        }
+                    }
+                    
+                    console.log(`✅ Caption regenerado exitosamente para imagen ${index}`);
+                } else {
+                    throw new Error('No se recibió caption en la respuesta');
+                }
+                
+            } catch (error) {
+                console.error('Error al regenerar caption:', error);
+                alert('Error al regenerar caption: ' + error.message);
+            } finally {
+                // Restaurar el botón
+                button.innerHTML = originalText;
+                button.disabled = false;
+                console.log(`🔄 Botón restaurado para imagen ${index}`);
+            }
+        }
+
+        function saveEditedResults(editedResults) {
+            const dataStr = JSON.stringify(editedResults, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+            link.download = 'captions_editados.json';
+                link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            const dropZone = document.getElementById('metadataDropZone');
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            const dropZone = document.getElementById('metadataDropZone');
+            dropZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                analyzeMetadata(files[0]);
+            }
+        }
+
+        async function analyzeMetadata(file) {
+            if (!file) {
+                alert('Por favor selecciona una imagen.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/api/analyze_metadata', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al analizar metadatos');
+                }
+
+                const result = await response.json();
+                displayMetadataResults(result);
+                
+            } catch (error) {
+                console.error('Error al analizar metadatos:', error);
+                alert('Error al analizar metadatos: ' + error.message);
+            }
+        }
+
+        function displayMetadataResults(data) {
+            const container = document.getElementById('metadataResults');
+            
+            let html = '<div class="card"><div class="card-body">';
+            
+            if (data.ai_model || data.prompt || data.parameters) {
+                html += '<h5 class="card-title">✅ Metadatos de IA encontrados</h5>';
+                
+                if (data.ai_model) {
+                    html += `<p><strong>Modelo:</strong> ${data.ai_model}</p>`;
+                }
+                
+                if (data.prompt) {
+                    html += `<p><strong>Prompt:</strong></p>`;
+                    html += `<div class="alert alert-info">${data.prompt}</div>`;
+                }
+                
+                if (data.parameters && Object.keys(data.parameters).length > 0) {
+                    html += '<p><strong>Parámetros:</strong></p>';
+                    html += '<ul class="list-group list-group-flush">';
+                    for (const [key, value] of Object.entries(data.parameters)) {
+                        html += `<li class="list-group-item"><strong>${key}:</strong> ${value}</li>`;
+                    }
+                    html += '</ul>';
+                }
+            } else {
+                html += '<h5 class="card-title">❌ No se encontraron metadatos de IA</h5>';
+                html += '<p class="text-muted">Esta imagen no contiene metadatos de generación de IA detectables.</p>';
+            }
+            
+            if (data.exif_data && Object.keys(data.exif_data).length > 0) {
+                html += '<h6 class="mt-3">Otros metadatos EXIF:</h6>';
+                html += '<ul class="list-group list-group-flush">';
+                for (const [key, value] of Object.entries(data.exif_data)) {
+                    if (typeof value === 'object') {
+                        html += `<li class="list-group-item"><strong>${key}:</strong> ${JSON.stringify(value)}</li>`;
+                    } else {
+                        html += `<li class="list-group-item"><strong>${key}:</strong> ${value}</li>`;
+                    }
+                }
+                html += '</ul>';
+            }
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        // Sistema de templates y pestañas dinámicas
+        class TabRegistry {
+            constructor() {
+                this.tabs = [];
+                this.activeTab = null;
+            }
+
+            register(tab) {
+                this.tabs.push(tab);
+                this.renderTab(tab);
+                
+                if (this.tabs.length === 1) {
+                    this.activate(tab.id);
+                }
+            }
+
+            renderTab(tab) {
+                // Renderizar navegación
+                const tabNav = document.getElementById('mainTabs');
+                const navItem = document.createElement('li');
+                navItem.className = 'nav-item';
+                navItem.innerHTML = `
+                    <a class="nav-link" id="${tab.id}-tab" data-bs-toggle="tab" href="#${tab.id}" role="tab">
+                        ${tab.title}
+                    </a>
+                `;
+                tabNav.appendChild(navItem);
+
+                // Renderizar contenido
+                const tabContent = document.getElementById('mainTabsContent');
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'tab-pane fade';
+                contentDiv.id = tab.id;
+                contentDiv.setAttribute('role', 'tabpanel');
+                contentDiv.innerHTML = tab.content;
+                tabContent.appendChild(contentDiv);
+            }
+
+            activate(tabId) {
+                // Desactivar todas las pestañas
+                document.querySelectorAll('#mainTabs .nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelectorAll('#mainTabsContent .tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+
+                // Activar la pestaña seleccionada
+                const tabLink = document.getElementById(`${tabId}-tab`);
+                const tabPane = document.getElementById(tabId);
+                
+                if (tabLink && tabPane) {
+                    tabLink.classList.add('active');
+                    tabPane.classList.add('show', 'active');
+                    this.activeTab = tabId;
+                }
+            }
+
+            remove(tabId) {
+                const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
+                if (tabIndex > -1) {
+                    this.tabs.splice(tabIndex, 1);
+                    
+                    // Eliminar del DOM
+                    const tabLink = document.getElementById(`${tabId}-tab`);
+                    const tabPane = document.getElementById(tabId);
+                    
+                    if (tabLink) tabLink.parentElement.remove();
+                    if (tabPane) tabPane.remove();
+                }
+            }
+        }
+
+        // Inicializar registro de pestañas después de definir la clase
+        window.tabRegistry = new TabRegistry();
+
+        // Templates reutilizables
+        const TabTemplates = {
+            basicCard: (title, content) => `
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">${title}</h5>
+                    </div>
+                    <div class="card-body">
+                        ${content}
+                    </div>
+                </div>
+            `,
+            
+            fileUpload: (id, accept, label) => `
+                <div class="mb-3">
+                    <label for="${id}" class="form-label">${label}</label>
+                    <input type="file" class="form-control" id="${id}" accept="${accept}">
+                </div>
+            `,
+            
+            form: (fields, submitBtnText, submitBtnId) => `
+                <form>
+                    ${fields.map(field => field.html).join('')}
+                    <button type="button" class="btn btn-primary" id="${submitBtnId}">
+                        ${submitBtnText}
+                    </button>
+                </form>
+            `
+        };
+
+        // Templates específicos para las pestañas existentes
+        const ExistingTabTemplates = {
+            generationTab: `
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Subir Imágenes</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="upload-area" id="uploadArea">
+                                        <h5>Arrastra y suelta tus imágenes aquí</h5>
+                                        <p class="mb-3">o</p>
+                                        <button type="button" class="btn btn-custom" id="selectImagesBtn">Seleccionar Imágenes</button>
+                                        <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                                        <div id="fileList" class="mt-3"></div>
+                                    </div>
+                                    
+                                    <div id="filePreview" class="row mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="model-selector">
+                                <h6>Seleccionar Modelo</h6>
+                                <div id="modelContainer">
+                                    <!-- Los modelos se cargarán dinámicamente -->
+                                </div>
+                            </div>
+                            
+                            <div id="customPromptContainer" style="display: none;" class="model-selector">
+                                <h6>Prompt Personalizado</h6>
+                                <textarea id="customPromptInput" class="form-control mb-2" rows="3" placeholder="Describe qué quieres que identifique en las imágenes..."></textarea>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('customPromptInput').value='Describe the hair color and clothing style'">Cabello y ropa</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('customPromptInput').value='Describe the accessories and jewelry'">Accesorios</button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('customPromptInput').value='Describe the background and setting'">Fondo</button>
+                                </div>
+                            </div>
+                            
+                            <div class="model-selector">
+                                <h6>Configuración</h6>
+                                <div class="mb-2">
+                                    <label for="keywordInput" class="form-label">Palabra clave (opcional)</label>
+                                    <input type="text" class="form-control form-control-sm" id="keywordInput" placeholder="ej: portrait">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="minWordsInput" class="form-label">Palabras mínimas</label>
+                                    <input type="number" class="form-control form-control-sm" id="minWordsInput" value="15" min="1" max="100">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="consistencySelect" class="form-label">Consistencia de personas</label>
+                                    <select class="form-select form-select-sm" id="consistencySelect">
+                                        <option value="auto" selected>Automática (recomendado)</option>
+                                        <option value="woman">Siempre "woman"</option>
+                                        <option value="girl">Siempre "girl"</option>
+                                        <option value="little girl">Siempre "little girl"</option>
+                                        <option value="young girl">Siempre "young girl"</option>
+                                        <option value="man">Siempre "man"</option>
+                                        <option value="boy">Siempre "boy"</option>
+                                        <option value="person">Siempre "person"</option>
+                                        <option value="none">Sin normalización</option>
+                                    </select>
+                                    <small class="text-muted">Normaliza términos de personas para consistencia</small>
+                                </div>
+                            </div>
+                            
+                            <button id="generateBtn" class="btn btn-custom w-100 mb-2" disabled>
+                                <span class="loading spinner-border spinner-border-sm me-2" role="status"></span>
+                                Generar Captions
+                            </button>
+                            
+                            <div id="progressContainer" class="mb-3" style="display: none;">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+                                </div>
+                                <div id="progressText" class="text-center text-muted small">
+                                    Preparando generación...
+                                </div>
+                            </div>
+                            
+                            <button id="sendToEditBtn" class="btn btn-send-to-edit w-100" onclick="sendToEdit()">
+                                📝 Enviar a Edición
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div id="results"></div>
+                            
+                            <div id="resultActions" style="display: none;">
+                                <div class="card mt-4">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <h5 class="card-title text-center mb-4">Acciones Disponibles</h5>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-4">
+                                            <div class="col-12 text-center">
+                                                <button id="saveResultsBtn" class="btn btn-outline-primary btn-lg me-3">
+                                                    💾 Guardar JSON
+                                                </button>
+                                                <button id="editResultsBtn" class="btn btn-outline-primary btn-lg ms-3" onclick="loadCaptionsForEdit()">
+                                                    ✏️ Editar Captions
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4">
+                                        
+                                        <div class="row">
+                                            <div class="col-12 text-center">
+                                                <h6 class="mb-3">Descargar Imágenes Redimensionadas</h6>
+                                                <p class="text-muted mb-3">Selecciona la resolución para las imágenes:</p>
+                                                
+                                                <div class="btn-group mb-4" role="group">
+                                                    <button type="button" class="btn btn-outline-primary resolution-btn" data-width="512" data-height="512">512x512</button>
+                                                    <button type="button" class="btn btn-outline-primary resolution-btn" data-width="768" data-height="768">768x768</button>
+                                                    <button type="button" class="btn btn-outline-primary resolution-btn" data-width="1024" data-height="1024">1024x1024</button>
+                                                </div>
+                                                
+                                                <div>
+                                                    <button id="downloadZipBtn" class="btn btn-success btn-lg">
+                                                        📦 Descargar ZIP
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            editTab: `
+                <div class="container-fluid">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Cargar Captions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="upload-area" id="editUploadArea">
+                                        <h5>Arrastra y suelta tu archivo JSON aquí</h5>
+                                        <p class="mb-3">o</p>
+                                        <button type="button" class="btn btn-custom" id="selectEditFileBtn">Seleccionar Archivo JSON</button>
+                                        <input type="file" id="captionsFile" accept=".json" style="display: none;">
+                                        <div id="editFileList" class="mt-3"></div>
+                                    </div>
+                                    
+                                    <button id="loadCaptionsBtn" class="btn btn-custom w-100 mb-3" style="display: none;">
+                                        📂 Cargar Captions
+                                    </button>
+                                    
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <strong>Tip:</strong> También puedes cargar captions desde la pestaña de generación haciendo clic en "Editar Captions" después de generar los resultados.
+                                        </small>
+                                    </div>
+                                    
+                                    <button id="loadToEditBtn" class="btn btn-outline-primary w-100">
+                                        📋 Usar Últimos Resultados
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div id="editResults">
+                                <div class="alert alert-info">
+                                    Carga un archivo JSON o genera captions primero para comenzar a editar.
+                                </div>
+                            </div>
+                            
+                            <div id="editActions" style="display: none;">
+                                <div class="card mt-4">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <h5 class="card-title text-center mb-4">Acciones de Edición</h5>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-4">
+                                            <div class="col-12 text-center">
+                                                <button id="saveEditedBtn" class="btn btn-outline-primary btn-lg">
+                                                    💾 Guardar JSON Editado
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <hr class="my-4">
+                                        
+                                        <div class="row">
+                                            <div class="col-12 text-center">
+                                                <h6 class="mb-3">Descargar Imágenes Editadas</h6>
+                                                <p class="text-muted mb-3">Selecciona la resolución para las imágenes:</p>
+                                                
+                                                <div class="btn-group mb-4" role="group">
+                                                    <button type="button" class="btn btn-outline-primary edit-resolution-btn" data-width="512" data-height="512">512x512</button>
+                                                    <button type="button" class="btn btn-outline-primary edit-resolution-btn" data-width="768" data-height="768">768x768</button>
+                                                    <button type="button" class="btn btn-outline-primary edit-resolution-btn" data-width="1024" data-height="1024">1024x1024</button>
+                                                </div>
+                                                
+                                                <div>
+                                                    <button id="downloadEditZipBtn" class="btn btn-success btn-lg">
+                                                        📦 Descargar ZIP Editado
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            configTab: `
+                <div class="container-fluid">
+                    <div class="row justify-content-center">
+                        <div class="col-md-10">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0"><i class="fas fa-cog me-2"></i>Configuración del Sistema</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="configForm">
+                                        <!-- API Keys -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3"><i class="fas fa-key me-2"></i>Claves de API</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="openrouterApiKey" class="form-label">OpenRouter API Key</label>
+                                                    <input type="password" class="form-control" id="openrouterApiKey" placeholder="sk-or-v1-...">
+                                                    <div class="form-text">Clave para acceder a modelos de OpenRouter.ai</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Configuración del Modelo -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3"><i class="fas fa-brain me-2"></i>Configuración del Modelo</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="openrouterModel" class="form-label">Modelo OpenRouter</label>
+                                                    <input type="text" class="form-control" id="openrouterModel" placeholder="meta-llama/llama-3.2-11b-vision-instruct">
+                                                    <div class="form-text">Modelo de IA para generación de captions</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                 <label for="remoteModelMaxImageSize" class="form-label">Tamaño Máximo para Modelos Remotos (px)</label>
+                                                 <input type="number" class="form-control" id="remoteModelMaxImageSize" min="256" max="1024" step="64">
+                                                 <div class="form-text">Tamaño máximo para modelos remotos (Llama Vision). Los modelos locales (BLIP) usan la imagen original</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Calidad de Imágenes -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3"><i class="fas fa-image me-2"></i>Calidad de Imágenes</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="imageQuality" class="form-label">Calidad para API (1-100)</label>
+                                                    <input type="number" class="form-control" id="imageQuality" min="1" max="100" step="1">
+                                                    <div class="form-text">Calidad de imágenes enviadas a la API</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="downloadImageQuality" class="form-label">Calidad para Descarga (1-100)</label>
+                                                    <input type="number" class="form-control" id="downloadImageQuality" min="1" max="100" step="1">
+                                                    <div class="form-text">Calidad de imágenes en descargas ZIP</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Configuración del Servidor -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3"><i class="fas fa-server me-2"></i>Configuración del Servidor</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="serverHost" class="form-label">Host</label>
+                                                    <input type="text" class="form-control" id="serverHost" placeholder="localhost">
+                                                    <div class="form-text">Dirección del servidor</div>
+                                                </div>
+                                            </div>
+                                         <div class="col-md-6">
+                                             <div class="mb-3">
+                                                 <label for="serverPort" class="form-label">Puerto</label>
+                                                 <input type="number" class="form-control" id="serverPort" min="1000" max="65535" step="1">
+                                                 <div class="form-text">Puerto del servidor web</div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     
+                                     <!-- Modo Debug -->
+                                     <div class="row mb-4">
+                                         <div class="col-12">
+                                             <h6 class="text-primary mb-3"><i class="fas fa-bug me-2"></i>Modo de Ejecución</h6>
+                                         </div>
+                                         <div class="col-md-6">
+                                             <div class="mb-3">
+                                                 <div class="form-check form-switch">
+                                                     <input class="form-check-input" type="checkbox" id="debugMode" role="switch">
+                                                     <label class="form-check-label" for="debugMode">
+                                                         Modo Debug/Desarrollo
+                                                     </label>
+                                                 </div>
+                                                 <div class="form-text">Activa el modo debug para desarrollo (recarga automática, logs detallados)</div>
+                                             </div>
+                                         </div>
+                                        </div>
+                                        
+                                        <!-- Límites -->
+                                        <div class="row mb-4">
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>Límites del Sistema</h6>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="maxFiles" class="form-label">Máximo de Archivos</label>
+                                                    <input type="number" class="form-control" id="maxFiles" min="1" max="1000" step="1">
+                                                    <div class="form-text">Número máximo de imágenes por lote</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="maxFileSizeMb" class="form-label">Tamaño Máximo por Imagen (MB)</label>
+                                                    <input type="number" class="form-control" id="maxFileSizeMb" min="1" max="1000" step="1">
+                                                    <div class="form-text">Tamaño máximo por imagen individual</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Botones de Acción -->
+                                        <div class="row">
+                                            <div class="col-12 text-center">
+                                                <button type="button" class="btn btn-success btn-lg me-3" id="saveConfigBtn">
+                                                    <i class="fas fa-save me-2"></i>Guardar Configuración
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-lg me-3" id="loadConfigBtn">
+                                                    <i class="fas fa-folder-open me-2"></i>Cargar Configuración
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning btn-lg" id="resetConfigBtn">
+                                                    <i class="fas fa-undo me-2"></i>Restaurar Valores por Defecto
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            metadataTab: `
+                <div class="container-fluid">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Analizar Metadatos de IA</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="upload-area" id="metadataUploadArea">
+                                        <h5>Arrastra y suelta una imagen aquí</h5>
+                                        <p class="mb-3">o</p>
+                                        <button type="button" class="btn btn-custom" id="selectMetadataBtn">Seleccionar Imagen</button>
+                                        <input type="file" id="metadataFile" accept="image/*" style="display: none;">
+                                        <div id="metadataFileList" class="mt-3"></div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info mt-3">
+                                        <small>
+                                            <strong>¿Qué hace esta herramienta?</strong><br>
+                                            Extrae y muestra los metadatos de imágenes generadas por IA, incluyendo el modelo utilizado, el prompt y los parámetros de generación.
+                                        </small>
+                                    </div>
+                                    
+                                    <div id="metadataFilePreview" class="row mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div id="metadataResults">
+                                <div class="alert alert-secondary text-center">
+                                    Selecciona una imagen para ver sus metadatos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        // Funciones de utilidad para crear pestañas
+        function createTab(id, title, content, initFunction = null) {
+            const tab = { id, title, content };
+            window.tabRegistry.register(tab);
+            
+            if (initFunction) {
+                setTimeout(() => initFunction(), 100);
+            }
+        }
+
+        function createBasicTab(id, title, cardTitle, cardContent, initFunction = null) {
+            const content = TabTemplates.basicCard(cardTitle, cardContent);
+            createTab(id, title, content, initFunction);
+        }
+
+        function createFileUploadTab(id, title, fileInputs, submitBtnText, submitBtnId, initFunction = null) {
+            const fields = fileInputs.map(input => ({
+                html: TabTemplates.fileUpload(input.id, input.accept, input.label)
+            }));
+            
+            const content = TabTemplates.form(fields, submitBtnText, submitBtnId);
+            createTab(id, title, content, initFunction);
+        }
+
+        function createFormTab(id, title, fields, submitBtnText, submitBtnId, initFunction = null) {
+            const content = TabTemplates.form(fields, submitBtnText, submitBtnId);
+            createTab(id, title, content, initFunction);
+        }
+
+        // Funciones para crear pestañas específicas
+        function createGenerationTab() {
+            const content = ExistingTabTemplates.generationTab;
+            createTab('generation-panel', 'Generar Captions', content, initializeGenerationTabEvents);
+        }
+
+        function createEditTab() {
+            const content = ExistingTabTemplates.editTab;
+            createTab('edit-panel', 'Editar Captions', content, initializeEditTabEvents);
+        }
+
+        function createMetadataTab() {
+            const content = ExistingTabTemplates.metadataTab;
+            createTab('metadata-panel', 'Metadatos IA', content, initializeMetadataTabEvents);
+        }
+
+        function createConfigTab() {
+            const content = ExistingTabTemplates.configTab;
+            createTab('config-panel', 'Configuración', content, initializeConfigTabEvents);
+        }
+
+        // Funciones de inicialización de eventos por pestaña
+        function initializeGenerationTabEvents() {
+            // Los eventos principales ya están en initializeAllEventListeners
+            console.log('Eventos de pestaña de generación inicializados');
+        }
+
+        function initializeEditTabEvents() {
+            console.log('Inicializando eventos de pestaña de edición...');
+            
+            // Inicializar botones de resolución de edición
+            const editResolutionBtns = document.querySelectorAll('#editActions .edit-resolution-btn');
+            console.log('Botones de resolución de edición encontrados:', editResolutionBtns.length);
+            
+            editResolutionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#editActions .edit-resolution-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    console.log('Resolución de edición seleccionada:', btn.dataset.width, 'x', btn.dataset.height);
+                    });
+                });
+
+            // Activar el primer botón de resolución de edición por defecto
+            const firstEditResBtn = document.querySelector('#editActions .edit-resolution-btn');
+            if (firstEditResBtn) {
+                firstEditResBtn.classList.add('active');
+                console.log('Primer botón de resolución de edición activado:', firstEditResBtn.dataset.width, 'x', firstEditResBtn.dataset.height);
+            } else {
+                console.log('No se encontró el primer botón de resolución de edición');
+            }
+
+            const saveEditedBtn = document.getElementById('saveEditedBtn');
+            if (saveEditedBtn) {
+                saveEditedBtn.addEventListener('click', () => {
+                    const editedResults = [];
+                    // Buscar en la nueva estructura de tarjetas Bootstrap
+                    const cards = document.querySelectorAll('#editResults .card');
+                    
+                    cards.forEach((card, index) => {
+                        const textarea = card.querySelector('textarea');
+                        const imgElement = card.querySelector('img');
+                        const titleElement = card.querySelector('.card-title');
+                        
+                        if (textarea && textarea.value.trim() && imgElement && titleElement) {
+                            const filename = titleElement.textContent.trim();
+                            const caption = textarea.value.trim();
+                            
+                            editedResults.push({
+                                filename: filename,
+                                caption: caption,
+                                image_data: imgElement.src
+                            });
+                        }
+                    });
+                    
+                    if (editedResults.length === 0) {
+                        alert('No hay captions para guardar.');
+                        return;
+                    }
+                    
+                    saveEditedResults(editedResults);
+                });
+            }
+
+            const downloadEditZipBtn = document.getElementById('downloadEditZipBtn');
+            if (downloadEditZipBtn) {
+                downloadEditZipBtn.addEventListener('click', async () => {
+                    // Buscar específicamente en la pestaña de edición
+                    const activeBtn = document.querySelector('#editActions .edit-resolution-btn.active');
+                    console.log('Botón de resolución activo (edición):', activeBtn);
+                    
+                    const width = parseInt(activeBtn?.dataset.width) || 512;
+                    const height = parseInt(activeBtn?.dataset.height) || 512;
+                    
+                    console.log('Resolución seleccionada (edición):', width, 'x', height);
+                    
+                    try {
+                        const editedResults = [];
+                        // Buscar en la nueva estructura de tarjetas Bootstrap
+                        const cards = document.querySelectorAll('#editResults .card');
+                        
+                        cards.forEach((card, index) => {
+                            const textarea = card.querySelector('textarea');
+                            const imgElement = card.querySelector('img');
+                            const titleElement = card.querySelector('.card-title');
+                            
+                            if (textarea && textarea.value.trim() && imgElement && titleElement) {
+                                const filename = titleElement.textContent.trim();
+                                const caption = textarea.value.trim();
+                                
+                                editedResults.push({
+                                    filename: filename,
+                                    caption: caption
+                                });
+                                console.log(`Caption para descargar: ${filename} - "${caption}"`);
+                            }
+                        });
+                        
+                        if (editedResults.length === 0) {
+                            alert('No hay captions para descargar.');
+                            return;
+                        }
+                        
+                        console.log('Resultados editados para descargar:', editedResults);
+                        console.log('Datos enviados al backend (edición):', {
+                            results: editedResults,
+                            width: width,
+                            height: height
+                        });
+                        
+                        const response = await fetch('/api/download-zip', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                results: editedResults,
+                                width: width,
+                                height: height
+                            })
+                        });
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.error || 'Error al crear el archivo ZIP');
+                        }
+                        
+                        const blob = await response.blob();
+                        console.log('ZIP editado generado correctamente, tamaño:', blob.size, 'bytes');
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'imagenes_editadas.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        console.log('Descarga iniciada: imagenes_editadas.zip');
+                    } catch (error) {
+                        console.error('Error al descargar ZIP editado:', error);
+                        alert('Error al descargar las imágenes editadas: ' + error.message);
+                    }
+                });
+            }
+            // Event listeners para upload de edición
+            const editUploadArea = document.getElementById('editUploadArea');
+            const captionsFile = document.getElementById('captionsFile');
+            const selectEditFileBtn = document.getElementById('selectEditFileBtn');
+
+            if (editUploadArea && captionsFile && selectEditFileBtn) {
+                // Drag and drop
+                editUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+                    editUploadArea.classList.add('dragover');
+                });
+
+                editUploadArea.addEventListener('dragleave', () => {
+                    editUploadArea.classList.remove('dragover');
+                });
+
+                editUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    editUploadArea.classList.remove('dragover');
+                    handleEditFiles(e.dataTransfer.files);
+                });
+
+                // Click en el área de upload
+                editUploadArea.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        captionsFile.click();
+                    }
+                });
+
+                // Botón de seleccionar archivo
+                selectEditFileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    captionsFile.click();
+                });
+
+                // Cambio de archivo
+                captionsFile.addEventListener('change', (e) => {
+                    console.log('Archivo seleccionado en captionsFile:', e.target.files[0]);
+                    handleEditFiles(e.target.files);
+                });
+            }
+            
+            // Inicializar botón de cargar captions
+            const loadCaptionsBtn = document.getElementById('loadCaptionsBtn');
+            console.log('Botón loadCaptionsBtn encontrado:', loadCaptionsBtn);
+            console.log('Estilo del botón:', loadCaptionsBtn ? loadCaptionsBtn.style.display : 'No encontrado');
+            if (loadCaptionsBtn) {
+                loadCaptionsBtn.addEventListener('click', async () => {
+                    const fileInput = document.getElementById('captionsFile');
+                    const file = fileInput.files[0];
+                    
+                    if (!file) {
+                        alert('Por favor selecciona un archivo JSON.');
+                        return;
+                    }
+
+                    console.log('Cargando archivo:', file.name);
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            console.log('Datos parseados:', data);
+                            
+                            if (Array.isArray(data) && data.length > 0) {
+                                console.log('Datos válidos encontrados, cantidad:', data.length);
+                                currentResults = data;
+                                console.log('Llamando a displayEditResults...');
+                                displayEditResults();
+                                currentResultsFile = file.name;
+                                
+                                // Mostrar mensaje de éxito
+                                const editResults = document.getElementById('editResults');
+                                const successDiv = document.createElement('div');
+                                successDiv.className = 'alert alert-success mt-2';
+                                successDiv.textContent = `Captions cargados exitosamente desde ${file.name}`;
+                                editResults.insertBefore(successDiv, editResults.firstChild);
+                                
+                                setTimeout(() => successDiv.remove(), 3000);
+                                console.log('Captions cargados exitosamente');
+                            } else {
+                                alert('El archivo no contiene datos válidos de captions.');
+                            }
+                        } catch (error) {
+                            console.error('Error al parsear el archivo JSON:', error);
+                            alert('Error al leer el archivo JSON: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            }
+            
+            console.log('Eventos de pestaña de edición inicializados');
+        }
+
+        function initializeMetadataTabEvents() {
+            console.log('Inicializando eventos de pestaña de metadatos...');
+            
+            // Event listeners para upload de metadatos
+            const metadataUploadArea = document.getElementById('metadataUploadArea');
+            const metadataFile = document.getElementById('metadataFile');
+            const selectMetadataBtn = document.getElementById('selectMetadataBtn');
+
+            if (metadataUploadArea && metadataFile && selectMetadataBtn) {
+                // Drag and drop
+                metadataUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    metadataUploadArea.classList.add('dragover');
+                });
+
+                metadataUploadArea.addEventListener('dragleave', () => {
+                    metadataUploadArea.classList.remove('dragover');
+                });
+
+                metadataUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    metadataUploadArea.classList.remove('dragover');
+                    handleMetadataFiles(e.dataTransfer.files);
+                });
+
+                // Click en el área de upload
+                metadataUploadArea.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        metadataFile.click();
+                    }
+                });
+
+                // Botón de seleccionar archivo
+                selectMetadataBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    metadataFile.click();
+                });
+
+                // Cambio de archivo
+                metadataFile.addEventListener('change', (e) => {
+                    handleMetadataFiles(e.target.files);
+                });
+            }
+            
+            console.log('Eventos de pestaña de metadatos inicializados');
+        }
+
+        function initializeConfigTabEvents() {
+            console.log('Inicializando eventos de pestaña de configuración...');
+            
+            // Cargar configuración actual
+            loadCurrentConfig();
+            
+            // Event listeners para botones
+            const saveConfigBtn = document.getElementById('saveConfigBtn');
+            const loadConfigBtn = document.getElementById('loadConfigBtn');
+            const resetConfigBtn = document.getElementById('resetConfigBtn');
+            
+            if (saveConfigBtn) {
+                saveConfigBtn.addEventListener('click', saveConfiguration);
+            }
+            
+            if (loadConfigBtn) {
+                loadConfigBtn.addEventListener('click', loadCurrentConfig);
+            }
+            
+            if (resetConfigBtn) {
+                resetConfigBtn.addEventListener('click', resetToDefaults);
+            }
+            
+            console.log('Eventos de pestaña de configuración inicializados');
+        }
+
+        // Función para cargar la configuración actual
+        function loadCurrentConfig() {
+            fetch('/api/config')
+                .then(response => response.json())
+                .then(config => {
+                    // Guardar configuración actual en variable global
+                    window.currentConfig = config;
+                    
+                    // Llenar formulario con valores actuales
+                    const apiKey = config.api_keys?.openrouter || '';
+                    if (apiKey) {
+                        // Mostrar asteriscos si hay API key configurada
+                        document.getElementById('openrouterApiKey').value = '••••••••••••••••••••';
+                        document.getElementById('openrouterApiKey').placeholder = 'API key configurada (escribe nueva para cambiar)';
+                        // Marcar que no se ha modificado
+                        document.getElementById('openrouterApiKey').setAttribute('data-original', apiKey);
+                    } else {
+                        document.getElementById('openrouterApiKey').value = '';
+                        document.getElementById('openrouterApiKey').placeholder = 'sk-or-v1-...';
+                        document.getElementById('openrouterApiKey').removeAttribute('data-original');
+                    }
+                    document.getElementById('openrouterModel').value = config.settings?.openrouter_model || '';
+                    document.getElementById('remoteModelMaxImageSize').value = config.settings?.remote_model_max_image_size || 384;
+                    document.getElementById('imageQuality').value = config.settings?.image_quality || 85;
+                    document.getElementById('downloadImageQuality').value = config.settings?.download_image_quality || 95;
+                    document.getElementById('serverHost').value = config.server?.host || 'localhost';
+                    document.getElementById('serverPort').value = config.server?.port || 5000;
+                    document.getElementById('debugMode').checked = config.server?.debug_mode || false;
+                    document.getElementById('maxFiles').value = config.limits?.max_files || 100;
+                    document.getElementById('maxFileSizeMb').value = config.limits?.max_file_size_mb || 200;
+                    
+                    console.log('Configuración cargada:', config);
+                })
+                .catch(error => {
+                    console.error('Error cargando configuración:', error);
+                    alert('Error cargando la configuración actual');
+                });
+        }
+
+        // Función para guardar la configuración
+        function saveConfiguration() {
+            // Manejar API key: si el campo muestra asteriscos, usar la API key original
+            let apiKey = document.getElementById('openrouterApiKey').value;
+            if (apiKey === '••••••••••••••••••••') {
+                // Usar la API key original si no se ha modificado
+                apiKey = document.getElementById('openrouterApiKey').getAttribute('data-original') || '';
+            }
+            
+            const config = {
+                api_keys: {
+                    openrouter: apiKey
+                },
+                settings: {
+                    openrouter_model: document.getElementById('openrouterModel').value,
+                    remote_model_max_image_size: parseInt(document.getElementById('remoteModelMaxImageSize').value),
+                    image_quality: parseInt(document.getElementById('imageQuality').value),
+                    download_image_quality: parseInt(document.getElementById('downloadImageQuality').value)
+                },
+                server: {
+                    host: document.getElementById('serverHost').value,
+                    port: parseInt(document.getElementById('serverPort').value),
+                    debug_mode: document.getElementById('debugMode').checked
+                },
+                limits: {
+                    max_files: parseInt(document.getElementById('maxFiles').value),
+                    max_file_size_mb: parseInt(document.getElementById('maxFileSizeMb').value)
+                },
+                endpoints: {
+                    openrouter_url: "https://openrouter.ai/api/v1/chat/completions"
+                }
+            };
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Configuración guardada exitosamente');
+                    console.log('Configuración guardada:', config);
+                } else {
+                    alert('Error guardando la configuración: ' + result.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error guardando configuración:', error);
+                alert('Error guardando la configuración');
+            });
+        }
+
+        // Función para restaurar valores por defecto
+        function resetToDefaults() {
+            if (confirm('¿Estás seguro de que quieres restaurar los valores por defecto?')) {
+                document.getElementById('openrouterApiKey').value = '';
+                document.getElementById('openrouterApiKey').placeholder = 'sk-or-v1-...';
+                document.getElementById('openrouterApiKey').removeAttribute('data-original');
+                document.getElementById('openrouterModel').value = 'meta-llama/llama-3.2-11b-vision-instruct';
+                document.getElementById('remoteModelMaxImageSize').value = 384;
+                document.getElementById('imageQuality').value = 85;
+                document.getElementById('downloadImageQuality').value = 95;
+                document.getElementById('serverHost').value = 'localhost';
+                document.getElementById('serverPort').value = 5000;
+                document.getElementById('debugMode').checked = true;
+                document.getElementById('maxFiles').value = 100;
+                document.getElementById('maxFileSizeMb').value = 200;
+                
+                console.log('Valores por defecto restaurados');
+            }
+        }
+
+        // Función para manejar archivos de edición
+        function handleEditFiles(files) {
+            console.log('handleEditFiles llamada con:', files.length, 'archivos');
+            if (files.length > 0) {
+                const file = files[0];
+                const fileList = document.getElementById('editFileList');
+                const loadBtn = document.getElementById('loadCaptionsBtn');
+                const fileInput = document.getElementById('captionsFile');
+                
+                console.log('Archivo seleccionado:', file.name);
+                console.log('Botón loadCaptionsBtn encontrado en handleEditFiles:', loadBtn);
+                
+                // Asignar el archivo al input para que esté disponible para el botón de cargar
+                if (fileInput) {
+                    // Crear un nuevo FileList con el archivo
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+                    console.log('Archivo asignado al input captionsFile');
+                }
+                
+                fileList.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Archivo seleccionado:</strong> ${file.name}
+                    </div>
+                `;
+                
+                // Mostrar botón de cargar
+                if (loadBtn) {
+                    loadBtn.style.display = 'block';
+                    console.log('Botón loadCaptionsBtn mostrado');
+                    console.log('Estilo del botón después de mostrar:', loadBtn.style.display);
+                    console.log('Botón visible:', loadBtn.offsetParent !== null);
+                } else {
+                    console.log('Botón loadCaptionsBtn no encontrado');
+                }
+            }
+        }
+
+        // Función para manejar archivos de metadatos
+        function handleMetadataFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                const fileList = document.getElementById('metadataFileList');
+                const filePreview = document.getElementById('metadataFilePreview');
+                const metadataResults = document.getElementById('metadataResults');
+                
+                // Mostrar que el archivo fue seleccionado
+                fileList.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Archivo seleccionado:</strong> ${file.name}
+                    </div>
+                `;
+                
+                // Mostrar preview de la imagen
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageDataUrl = e.target.result;
+                    filePreview.innerHTML = `
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Vista previa de la imagen</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="${imageDataUrl}" 
+                                         class="img-fluid" 
+                                         style="max-height: 500px; cursor: pointer;" 
+                                         alt="${file.name}"
+                                         onclick="openImageZoomFromDataUrl('${imageDataUrl}', '${file.name}')"
+                                         title="Haz clic para ampliar">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+                
+                // Analizar metadatos
+                analyzeMetadata(file);
+            }
+        }
+        
+        // Función para analizar metadatos
+        async function analyzeMetadata(file) {
+            const metadataResults = document.getElementById('metadataResults');
+            
+            // Mostrar loading
+            metadataResults.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-spinner fa-spin"></i> Analizando metadatos...
+                    </div>
+                `;
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('/api/analyze_metadata', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // Debug: mostrar qué se recibió del backend
+                console.log('Respuesta del backend:', result);
+                console.log('Success:', result.success);
+                console.log('Model:', result.model);
+                console.log('Prompt:', result.prompt);
+                console.log('All metadata keys:', result.all_metadata ? Object.keys(result.all_metadata) : 'Ninguno');
+                
+                if (result.success) {
+                    // Mostrar metadatos encontrados
+                    let metadataHtml = `
+                        <div class="row justify-content-center">
+                            <div class="col-12 col-lg-10">
+                    `;
+                    
+                    // Mostrar metadatos específicos encontrados
+                    if (result.all_metadata && Object.keys(result.all_metadata).length > 0) {
+                        metadataHtml += `
+                            <div class="row justify-content-center">
+                                <div class="col-12 col-lg-10">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-light border-bottom">
+                                            <h5 class="mb-0 text-success"><i class="fas fa-check-circle me-2"></i>Metadatos específicos encontrados</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-3">
+                        `;
+                        
+                        // Modelo
+                        metadataHtml += `
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="fas fa-robot text-primary fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 text-primary">Modelo</h6>
+                                        <code class="bg-light p-2 rounded d-block">${result.model || 'No encontrado'}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Dimensiones
+                        metadataHtml += `
+                            <div class="col-12 col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="fas fa-expand-arrows-alt text-info fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1 text-info">Dimensiones</h6>
+                                        <code class="bg-light p-2 rounded d-block">${result.parameters || 'No encontradas'}</code>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Prompt
+                        if (result.prompt) {
+                            metadataHtml += `
+                                <div class="col-12">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-edit text-success fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-2 text-success">Prompt</h6>
+                                            <div class="alert alert-info mb-0" style="max-height: 150px; overflow-y: auto; font-size: 0.9em;">
+                                                ${result.prompt}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Prompt Negativo
+                        if (result.negative_prompt) {
+                            metadataHtml += `
+                                <div class="col-12">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-ban text-warning fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-2 text-warning">Prompt Negativo</h6>
+                                            <div class="alert alert-warning mb-0" style="max-height: 100px; overflow-y: auto; font-size: 0.9em;">
+                                                ${result.negative_prompt}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // LoRAs
+                        metadataHtml += `
+                            <div class="col-12">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        <i class="fas fa-palette text-purple fs-4"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-2 text-purple">LoRAs Utilizados</h6>
+                        `;
+                        
+                        if (result.lora_models && result.lora_models.length > 0) {
+                            result.lora_models.forEach(lora => {
+                                metadataHtml += `<span class="badge bg-primary me-2 mb-2 fs-6">${lora}</span>`;
+                            });
+                        } else {
+                            metadataHtml += `<span class="text-muted">No se encontraron LoRAs activos</span>`;
+                        }
+                        
+                        metadataHtml += `
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Software
+                        if (result.software) {
+                            metadataHtml += `
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <i class="fas fa-desktop text-secondary fs-4"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1 text-secondary">Software</h6>
+                                            <code class="bg-light p-2 rounded d-block">${result.software}</code>
+                                        </div>
+                                    </div>
+                    </div>
+                `;
+                        }
+                        
+                        // Botón para descargar metadatos completos
+                        metadataHtml += `
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Botón de descarga integrado -->
+                                        <div class="card-footer bg-transparent border-0 text-center pt-3">
+                                            <button class="btn btn-success btn-lg" onclick="downloadCompleteMetadata()">
+                                                <i class="fas fa-save me-2"></i>Descargar Metadatos Completos (JSON)
+                                            </button>
+                                            <p class="text-muted mt-2 mb-0">
+                                                <small>Incluye todos los metadatos EXIF y la información extraída</small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Guardar los metadatos completos en una variable global para la descarga
+                        window.completeMetadata = result.all_metadata;
+            } else {
+                        metadataHtml += `
+                            <div class="row justify-content-center">
+                                <div class="col-12 col-lg-10">
+                                    <div class="alert alert-warning text-center">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        No se encontraron metadatos específicos de IA.
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    metadataHtml += `
+                            </div>
+                        </div>
+                    `;
+                    
+                    metadataResults.innerHTML = metadataHtml;
+                } else {
+                    metadataResults.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> Error al analizar metadatos: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error analizando metadatos:', error);
+                metadataResults.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> Error al analizar metadatos: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Función para descargar metadatos completos
+        function downloadCompleteMetadata() {
+            if (!window.completeMetadata) {
+                alert('No hay metadatos completos disponibles para descargar.');
+                return;
+            }
+            
+            try {
+                // Crear un objeto con información adicional
+                const downloadData = {
+                    timestamp: new Date().toISOString(),
+                    extracted_metadata: {
+                        model: window.completeMetadata.model || null,
+                        prompt: window.completeMetadata.prompt || null,
+                        parameters: window.completeMetadata.parameters || null,
+                        lora_models: window.completeMetadata.lora_models || null
+                    },
+                    complete_exif_metadata: window.completeMetadata
+                };
+                
+                // Convertir a JSON formateado
+                const jsonString = JSON.stringify(downloadData, null, 2);
+                
+                // Crear blob y descargar
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                // Crear enlace de descarga
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `metadatos_completos_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Limpiar URL
+                URL.revokeObjectURL(url);
+                
+                console.log('Metadatos completos descargados exitosamente');
+            } catch (error) {
+                console.error('Error al descargar metadatos:', error);
+                alert('Error al descargar los metadatos completos.');
+            }
+        }
+
+        // Función para mostrar pestañas manualmente
+        function showTab(tabId) {
+            window.tabRegistry.activate(tabId);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+version: '3.8'
+
+name: captioning-ai-generator
+
+services:
+  captioning-ai-generator:
+    build: .
+    container_name: captioning-ai-generator
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app/uploads:/app/uploads
+      - ./app/static:/app/static
+      - ./app/backups:/app/backups
+      - ./app/config.json:/app/config.json
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  uploads:
+  static:
+  backups:
