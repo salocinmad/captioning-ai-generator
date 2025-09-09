@@ -33,8 +33,8 @@ COPY app/requirements.txt .
 # Instalar dependencias de Python
 RUN pip install --no-cache-dir --upgrade pip
 
-# Instalar PyTorch con CUDA (si está disponible)
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Instalar PyTorch con CUDA (versiones específicas que funcionan)
+RUN pip install --no-cache-dir torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
 
 # Instalar ONNX Runtime GPU
 RUN pip install --no-cache-dir onnxruntime-gpu

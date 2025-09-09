@@ -670,14 +670,15 @@ def load_model_on_demand(model_name):
         if model_name == 'blip':
             models['blip'] = BlipForConditionalGeneration.from_pretrained(
                 "Salesforce/blip-image-captioning-base", 
-                use_safetensors=True
+                use_safetensors=True,
+                torch_dtype=torch.float16
             ).to(device)
             processors['blip'] = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
             
         elif model_name == 'blip2':
             models['blip2'] = Blip2ForConditionalGeneration.from_pretrained(
                 "Salesforce/blip2-opt-2.7b", 
-                dtype=torch.float16,
+                torch_dtype=torch.float16,
                 use_safetensors=True
             ).to(device)
             processors['blip2'] = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
