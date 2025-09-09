@@ -1002,7 +1002,12 @@
             const generateBtn = document.getElementById('generateBtn');
             if (generateBtn) {
                 generateBtn.addEventListener('click', async () => {
-            const selectedModel = document.querySelector('input[name="model"]:checked').value;
+            const selectedModelElement = document.querySelector('input[name="model"]:checked');
+            if (!selectedModelElement) {
+                alert('Por favor selecciona un modelo.');
+                return;
+            }
+            const selectedModel = selectedModelElement.value;
             const keyword = document.getElementById('keywordInput').value.trim();
             const minWords = parseInt(document.getElementById('minWordsInput').value) || 0;
             const consistencyMode = document.getElementById('consistencySelect').value;
@@ -1528,7 +1533,9 @@
                     toggleCustomPrompt();
                     console.log('Modelos cargados exitosamente:', models.length);
                 } else {
-                    console.error('No se pudieron cargar los modelos disponibles');
+                    console.error('No se pudieron cargar los modelos disponibles - modelContainer no encontrado o sin modelos');
+                    console.log('modelContainer:', modelContainer);
+                    console.log('models:', models);
                 }
             } catch (error) {
                 console.error('Error al cargar modelos:', error);
