@@ -937,6 +937,26 @@
                             }
                             document.getElementById('generateBtn').disabled = false;
                             document.querySelector('.loading').style.display = 'none';
+                        } else if (progress.status === 'downloading_model') {
+                            // Mostrar mensaje de descarga del modelo
+                            progressBar.style.width = '10%';
+                            progressBar.textContent = 'Descargando modelo...';
+                            
+                            // Actualizar texto de progreso
+                            const progressText = document.querySelector('.progress-text');
+                            if (progressText) {
+                                progressText.textContent = progress.message || 'Descargando modelo...';
+                            }
+                        } else if (progress.status === 'model_loaded') {
+                            // Mostrar mensaje de modelo cargado
+                            progressBar.style.width = '20%';
+                            progressBar.textContent = 'Modelo cargado';
+                            
+                            // Actualizar texto de progreso
+                            const progressText = document.querySelector('.progress-text');
+                            if (progressText) {
+                                progressText.textContent = progress.message || 'Modelo cargado exitosamente';
+                            }
                         } else if (progress.status === 'processing') {
                             // Actualizar barra de progreso
                             const current = progress.current || progress.completed || 0;

@@ -652,9 +652,9 @@ def get_progress(task_id):
     
     return jsonify(progress_data[task_id])
 
-def load_model_on_demand(model_name):
+def load_model_on_demand(model_name, task_id=None):
     """Cargar modelo específico bajo demanda"""
-    global current_loaded_model, models, processors, model_loading_status
+    global current_loaded_model, models, processors, model_loading_status, progress_data
     
     # Si el modelo ya está cargado, no hacer nada
     if current_loaded_model == model_name and model_loading_status.get(model_name, {}).get('loaded', False):
@@ -665,6 +665,12 @@ def load_model_on_demand(model_name):
         unload_model(current_loaded_model)
     
     print(f"🔄 Cargando modelo {model_name}...")
+    
+    # Actualizar progreso si se proporciona task_id
+    if task_id and task_id in progress_data:
+        progress_data[task_id]['status'] = 'downloading_model'
+        progress_data[task_id]['message'] = f'Descargando modelo {model_name}...'
+        progress_data[task_id]['progress'] = 10
     
     try:
         if model_name == 'blip':
@@ -689,6 +695,12 @@ def load_model_on_demand(model_name):
         # Actualizar estado
         model_loading_status[model_name]['loaded'] = True
         current_loaded_model = model_name
+        
+        # Actualizar progreso si se proporciona task_id
+        if task_id and task_id in progress_data:
+            progress_data[task_id]['status'] = 'model_loaded'
+            progress_data[task_id]['message'] = f'Modelo {model_name} cargado exitosamente'
+            progress_data[task_id]['progress'] = 20
         
         print(f"✅ Modelo {model_name} cargado exitosamente")
         return True
@@ -1228,6 +1240,12 @@ def generate_caption_llama_vision(image, custom_prompt="Describe this image in d
 def process_images_async(files, model_name, task_id, keyword='', min_words=0, consistency_mode='auto', custom_prompt=''):
     """Procesar imágenes de forma asíncrona"""
     try:
+        # Cargar modelo bajo demanda con task_id para mostrar progreso
+        if not load_model_on_demand(model_name, task_id):
+            progress_data[task_id]['status'] = 'error'
+            progress_data[task_id]['message'] = f'Error: No se pudo cargar el modelo {model_name}'
+            return
+        
         for i, filename in enumerate(files):
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
