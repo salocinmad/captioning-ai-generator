@@ -1,0 +1,23 @@
+{
+  "api_keys": {
+    "openrouter": "YOUR_OPENROUTER_API_KEY_HERE"
+  },
+  "settings": {
+    "openrouter_model": "meta-llama/llama-3.2-11b-vision-instruct",
+    "remote_model_max_image_size": 384,
+    "image_quality": 85,
+    "download_image_quality": 95
+  },
+  "server": {
+    "host": "localhost",
+    "port": 5000,
+    "debug_mode": false
+  },
+  "limits": {
+    "max_files": 100,
+    "max_file_size_mb": 200
+  },
+  "endpoints": {
+    "openrouter_url": "https://openrouter.ai/api/v1/chat/completions"
+  }
+}

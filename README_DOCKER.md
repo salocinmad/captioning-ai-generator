@@ -31,10 +31,7 @@ docker/
 
 ## Configuración inicial
 
-1. **Copia el archivo de configuración de ejemplo:**
-   ```bash
-   cp config.example.json app/config.json
-   ```
+1. **El archivo `config.json` se crea automáticamente** desde `config.example.json` al iniciar el contenedor.
 
 2. **Edita `app/config.json` y agrega tu API key de OpenRouter:**
    ```json

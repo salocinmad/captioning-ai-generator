@@ -12,7 +12,6 @@ services:
       - ./app/uploads:/app/uploads
       - ./app/static:/app/static
       - ./app/backups:/app/backups
-      - ./app/config.json:/app/config.json
     environment:
       - CUDA_VISIBLE_DEVICES=0
     restart: unless-stopped

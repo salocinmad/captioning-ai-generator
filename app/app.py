@@ -28,6 +28,18 @@ from dotenv import load_dotenv
 # Cargar variables de entorno
 load_dotenv()
 
+# Crear config.json automáticamente si no existe
+import shutil
+if not os.path.exists('config.json'):
+    if os.path.exists('config.example.json'):
+        shutil.copy('config.example.json', 'config.json')
+        print("✅ Archivo config.json creado desde config.example.json")
+        print("⚠️  Recuerda editar config.json con tu API key antes de usar la aplicación")
+    else:
+        print("❌ Error: No se encontró config.example.json")
+else:
+    print("✅ Archivo config.json encontrado")
+
 # Función para cargar configuración desde config.json
 def load_config():
     """Cargar configuración desde config.json"""
