@@ -665,6 +665,8 @@ def load_model_on_demand(model_name, task_id=None):
         unload_model(current_loaded_model)
     
     print(f"🔄 Cargando modelo {model_name}...")
+    print(f"📥 Descargando modelo {model_name} desde Hugging Face...")
+    print(f"⏳ Esto puede tomar varios minutos en la primera descarga...")
     
     # Actualizar progreso si se proporciona task_id
     if task_id and task_id in progress_data:
@@ -674,20 +676,32 @@ def load_model_on_demand(model_name, task_id=None):
     
     try:
         if model_name == 'blip':
+            print(f"📦 Descargando modelo BLIP: Salesforce/blip-image-captioning-base")
+            print(f"🔧 Configuración: use_safetensors=False, torch_dtype=torch.float16")
             models['blip'] = BlipForConditionalGeneration.from_pretrained(
                 "Salesforce/blip-image-captioning-base", 
                 use_safetensors=False,
                 torch_dtype=torch.float16
             ).to(device)
+            print(f"✅ Modelo BLIP descargado y cargado en {device}")
+            
+            print(f"📦 Descargando procesador BLIP...")
             processors['blip'] = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base", use_fast=True)
+            print(f"✅ Procesador BLIP descargado")
             
         elif model_name == 'blip2':
+            print(f"📦 Descargando modelo BLIP2: Salesforce/blip2-opt-2.7b")
+            print(f"🔧 Configuración: use_safetensors=False, torch_dtype=torch.float16")
             models['blip2'] = Blip2ForConditionalGeneration.from_pretrained(
                 "Salesforce/blip2-opt-2.7b", 
                 torch_dtype=torch.float16,
                 use_safetensors=False
             ).to(device)
+            print(f"✅ Modelo BLIP2 descargado y cargado en {device}")
+            
+            print(f"📦 Descargando procesador BLIP2...")
             processors['blip2'] = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b", use_fast=True)
+            print(f"✅ Procesador BLIP2 descargado")
             
         
         # Modelos WD14 eliminados
@@ -702,12 +716,14 @@ def load_model_on_demand(model_name, task_id=None):
             progress_data[task_id]['message'] = f'Modelo {model_name} cargado exitosamente'
             progress_data[task_id]['progress'] = 20
         
-        print(f"✅ Modelo {model_name} cargado exitosamente")
+        print(f"🎉 Modelo {model_name} cargado exitosamente y listo para generar captions")
+        print(f"💾 Memoria GPU utilizada: {torch.cuda.memory_allocated() / 1024**3:.2f} GB" if torch.cuda.is_available() else "💾 Usando CPU")
         return True
         
     except Exception as e:
         print(f"❌ Error cargando modelo {model_name}: {e}")
         print(f"❌ Tipo de error: {type(e).__name__}")
+        print(f"🔍 Verifica que tienes conexión a internet y espacio suficiente en disco")
         model_loading_status[model_name]['available'] = False
         return False
 
